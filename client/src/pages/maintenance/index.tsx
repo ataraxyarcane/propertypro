@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Drill, Building, Calendar, AlertTriangle, CheckCircle, Clock, Filter } from "lucide-react";
 import { formatDate } from "@/types";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/hooks/use-simple-auth";
 import { isAdmin } from "@/types";
 import SEO from "@/components/seo";
 

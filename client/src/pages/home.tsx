@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/hooks/use-simple-auth";
 import { isAdmin } from "@/types";
 import { Property, DashboardData } from "@/types";
 import PropertyCard from "@/components/properties/property-card";

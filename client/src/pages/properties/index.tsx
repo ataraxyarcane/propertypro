@@ -6,7 +6,7 @@ import { Property } from "@/types";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Plus } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/hooks/use-simple-auth";
 import { isAdmin } from "@/types";
 import SEO from "@/components/seo";
 

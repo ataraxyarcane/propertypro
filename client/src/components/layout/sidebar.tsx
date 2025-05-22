@@ -15,7 +15,7 @@ import {
   User as UserIcon,
   LogOut 
 } from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/use-simple-auth';
 
 interface SidebarProps {
   isOpen: boolean;

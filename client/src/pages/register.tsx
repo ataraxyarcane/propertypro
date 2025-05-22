@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import RegisterForm from "@/components/auth/register-form";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/hooks/use-simple-auth";
 import { useLocation } from "wouter";
 import SEO from "@/components/seo";
 import { Link } from "wouter";

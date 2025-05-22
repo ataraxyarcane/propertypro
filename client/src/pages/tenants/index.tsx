@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/hooks/use-simple-auth";
 import { isAdmin } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import {
