@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import bcrypt from "bcrypt";
 import session from "express-session";
 import { ZodError } from "zod";
-import { formatError } from "zod-validation-error";
+import { fromError } from "zod-validation-error";
 import { 
   insertUserSchema,
   insertPropertySchema,
@@ -180,7 +180,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       if (error instanceof ZodError) {
-        const formattedError = formatError(error);
+        const formattedError = fromError(error);
         return res.status(400).json({ message: formattedError.message });
       }
       res.status(500).json({ message: "Registration failed" });
@@ -277,7 +277,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(userWithoutPassword);
     } catch (error) {
       if (error instanceof ZodError) {
-        const formattedError = formatError(error);
+        const formattedError = fromError(error);
         return res.status(400).json({ message: formattedError.message });
       }
       res.status(500).json({ message: "Error updating user" });
@@ -361,7 +361,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(newProperty);
     } catch (error) {
       if (error instanceof ZodError) {
-        const formattedError = formatError(error);
+        const formattedError = fromError(error);
         return res.status(400).json({ message: formattedError.message });
       }
       res.status(500).json({ message: "Error creating property" });
@@ -386,7 +386,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updatedProperty);
     } catch (error) {
       if (error instanceof ZodError) {
-        const formattedError = formatError(error);
+        const formattedError = fromError(error);
         return res.status(400).json({ message: formattedError.message });
       }
       res.status(500).json({ message: "Error updating property" });
@@ -500,7 +500,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(newLease);
     } catch (error) {
       if (error instanceof ZodError) {
-        const formattedError = formatError(error);
+        const formattedError = fromError(error);
         return res.status(400).json({ message: formattedError.message });
       }
       res.status(500).json({ message: "Error creating lease" });
@@ -532,7 +532,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updatedLease);
     } catch (error) {
       if (error instanceof ZodError) {
-        const formattedError = formatError(error);
+        const formattedError = fromError(error);
         return res.status(400).json({ message: formattedError.message });
       }
       res.status(500).json({ message: "Error updating lease" });
@@ -626,7 +626,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updatedTenant);
     } catch (error) {
       if (error instanceof ZodError) {
-        const formattedError = formatError(error);
+        const formattedError = fromError(error);
         return res.status(400).json({ message: formattedError.message });
       }
       res.status(500).json({ message: "Error updating tenant" });
@@ -725,7 +725,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(newRequest);
     } catch (error) {
       if (error instanceof ZodError) {
-        const formattedError = formatError(error);
+        const formattedError = fromError(error);
         return res.status(400).json({ message: formattedError.message });
       }
       res.status(500).json({ message: "Error creating maintenance request" });
@@ -771,7 +771,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updatedRequest);
     } catch (error) {
       if (error instanceof ZodError) {
-        const formattedError = formatError(error);
+        const formattedError = fromError(error);
         return res.status(400).json({ message: formattedError.message });
       }
       res.status(500).json({ message: "Error updating maintenance request" });
