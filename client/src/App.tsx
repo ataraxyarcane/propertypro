@@ -20,7 +20,7 @@ import Maintenance from "@/pages/maintenance/index";
 import Profile from "@/pages/profile/index";
 import Settings from "@/pages/settings";
 import AuthOverlay from "@/components/auth/auth-overlay";
-import { AuthProvider } from "@/hooks/use-auth";
+import { AuthProvider } from "@/hooks/use-simple-auth";
 import { useEffect } from "react";
 import { initGA } from "./lib/analytics";
 import { useAnalytics } from "./hooks/use-analytics";

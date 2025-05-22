@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 import { apiRequest } from '@/lib/queryClient';
 import { AuthUser, User } from '@/types';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface AuthContextType {
   user: User | null;
@@ -25,21 +25,32 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   
-  const { isLoading } = useQuery({
-    queryKey: ['/api/auth/me'],
-    enabled: !!localStorage.getItem('token'),
-    onSuccess: (data) => {
-      setUser(data);
-    },
-    onError: () => {
-      // Clear token if authentication fails
-      localStorage.removeItem('token');
-      setUser(null);
+  // Check authentication without React Query for now
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      // Try to fetch user data
+      apiRequest('/api/auth/me')
+        .then((response) => {
+          const userData = response as User;
+          setUser(userData);
+        })
+        .catch(() => {
+          // Clear token if authentication fails
+          localStorage.removeItem('token');
+          setUser(null);
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    } else {
+      setIsLoading(false);
     }
-  });
+  }, []);
 
   useEffect(() => {
     // Setup axios interceptor for auth header
