@@ -293,7 +293,13 @@ export class MemStorage implements IStorage {
   async createTenant(insertTenant: InsertTenant): Promise<Tenant> {
     const id = this.tenantIdCounter++;
     const now = new Date();
-    const tenant: Tenant = { ...insertTenant, id, createdAt: now };
+    const tenant: Tenant = { 
+      ...insertTenant, 
+      id, 
+      createdAt: now,
+      phone: insertTenant.phone || null,
+      emergencyContact: insertTenant.emergencyContact || null
+    };
     this.tenants.set(id, tenant);
     return tenant;
   }
@@ -335,7 +341,14 @@ export class MemStorage implements IStorage {
   async createLease(insertLease: InsertLease): Promise<Lease> {
     const id = this.leaseIdCounter++;
     const now = new Date();
-    const lease: Lease = { ...insertLease, id, createdAt: now };
+    const lease: Lease = { 
+      ...insertLease, 
+      id, 
+      createdAt: now,
+      status: insertLease.status || 'active',
+      securityDeposit: insertLease.securityDeposit || null,
+      documents: insertLease.documents || null
+    };
     this.leases.set(id, lease);
     return lease;
   }
@@ -381,7 +394,9 @@ export class MemStorage implements IStorage {
       ...insertRequest, 
       id, 
       createdAt: now,
-      resolvedAt: null 
+      resolvedAt: null,
+      status: insertRequest.status || 'pending',
+      priority: insertRequest.priority || 'medium'
     };
     this.maintenanceRequests.set(id, request);
     return request;

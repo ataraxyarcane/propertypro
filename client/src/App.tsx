@@ -20,6 +20,7 @@ import Maintenance from "@/pages/maintenance/index";
 import Profile from "@/pages/profile/index";
 import Settings from "@/pages/settings";
 import AuthOverlay from "@/components/auth/auth-overlay";
+import { AuthProvider } from "@/hooks/use-auth";
 import { useEffect } from "react";
 import { initGA } from "./lib/analytics";
 import { useAnalytics } from "./hooks/use-analytics";
@@ -73,11 +74,13 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <AuthOverlay>
-          <Layout>
-            <Router />
-          </Layout>
-        </AuthOverlay>
+        <AuthProvider>
+          <AuthOverlay>
+            <Layout>
+              <Router />
+            </Layout>
+          </AuthOverlay>
+        </AuthProvider>
         <Toaster />
       </TooltipProvider>
     </QueryClientProvider>
