@@ -106,7 +106,7 @@ export default function PropertySearch({ onSearch, onReset }: PropertySearchProp
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">All types</SelectItem>
+                        <SelectItem value="all">All types</SelectItem>
                         <SelectItem value="apartment">Apartment</SelectItem>
                         <SelectItem value="house">House</SelectItem>
                         <SelectItem value="condo">Condo</SelectItem>
@@ -149,7 +149,7 @@ export default function PropertySearch({ onSearch, onReset }: PropertySearchProp
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">Any</SelectItem>
+                        <SelectItem value="any">Any</SelectItem>
                         <SelectItem value="1">1+</SelectItem>
                         <SelectItem value="2">2+</SelectItem>
                         <SelectItem value="3">3+</SelectItem>
