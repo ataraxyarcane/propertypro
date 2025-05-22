@@ -5,6 +5,8 @@ import {
   leases, Lease, InsertLease,
   maintenanceRequests, MaintenanceRequest, InsertMaintenanceRequest
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, desc, sql } from "drizzle-orm";
 
 // Storage interface
 export interface IStorage {
@@ -439,4 +441,216 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class DatabaseStorage implements IStorage {
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user || undefined;
+  }
+
+  async getUsers(): Promise<User[]> {
+    return await db.select().from(users);
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
+    return user;
+  }
+
+  async updateUser(id: number, userData: Partial<User>): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set(userData)
+      .where(eq(users.id, id))
+      .returning();
+    return user || undefined;
+  }
+
+  async deleteUser(id: number): Promise<boolean> {
+    const result = await db.delete(users).where(eq(users.id, id));
+    return result.rowCount > 0;
+  }
+
+  async getProperty(id: number): Promise<Property | undefined> {
+    const [property] = await db.select().from(properties).where(eq(properties.id, id));
+    return property || undefined;
+  }
+
+  async getProperties(): Promise<Property[]> {
+    return await db.select().from(properties);
+  }
+
+  async createProperty(insertProperty: InsertProperty): Promise<Property> {
+    const [property] = await db
+      .insert(properties)
+      .values(insertProperty)
+      .returning();
+    return property;
+  }
+
+  async updateProperty(id: number, propertyData: Partial<Property>): Promise<Property | undefined> {
+    const [property] = await db
+      .update(properties)
+      .set(propertyData)
+      .where(eq(properties.id, id))
+      .returning();
+    return property || undefined;
+  }
+
+  async deleteProperty(id: number): Promise<boolean> {
+    const result = await db.delete(properties).where(eq(properties.id, id));
+    return result.rowCount > 0;
+  }
+
+  async getTenant(id: number): Promise<Tenant | undefined> {
+    const [tenant] = await db.select().from(tenants).where(eq(tenants.id, id));
+    return tenant || undefined;
+  }
+
+  async getTenantByUserId(userId: number): Promise<Tenant | undefined> {
+    const [tenant] = await db.select().from(tenants).where(eq(tenants.userId, userId));
+    return tenant || undefined;
+  }
+
+  async getTenants(): Promise<Tenant[]> {
+    return await db.select().from(tenants);
+  }
+
+  async createTenant(insertTenant: InsertTenant): Promise<Tenant> {
+    const [tenant] = await db
+      .insert(tenants)
+      .values(insertTenant)
+      .returning();
+    return tenant;
+  }
+
+  async updateTenant(id: number, tenantData: Partial<Tenant>): Promise<Tenant | undefined> {
+    const [tenant] = await db
+      .update(tenants)
+      .set(tenantData)
+      .where(eq(tenants.id, id))
+      .returning();
+    return tenant || undefined;
+  }
+
+  async deleteTenant(id: number): Promise<boolean> {
+    const result = await db.delete(tenants).where(eq(tenants.id, id));
+    return result.rowCount > 0;
+  }
+
+  async getLease(id: number): Promise<Lease | undefined> {
+    const [lease] = await db.select().from(leases).where(eq(leases.id, id));
+    return lease || undefined;
+  }
+
+  async getLeases(): Promise<Lease[]> {
+    return await db.select().from(leases);
+  }
+
+  async getLeasesForProperty(propertyId: number): Promise<Lease[]> {
+    return await db.select().from(leases).where(eq(leases.propertyId, propertyId));
+  }
+
+  async getLeasesForTenant(tenantId: number): Promise<Lease[]> {
+    return await db.select().from(leases).where(eq(leases.tenantId, tenantId));
+  }
+
+  async createLease(insertLease: InsertLease): Promise<Lease> {
+    const [lease] = await db
+      .insert(leases)
+      .values(insertLease)
+      .returning();
+    return lease;
+  }
+
+  async updateLease(id: number, leaseData: Partial<Lease>): Promise<Lease | undefined> {
+    const [lease] = await db
+      .update(leases)
+      .set(leaseData)
+      .where(eq(leases.id, id))
+      .returning();
+    return lease || undefined;
+  }
+
+  async deleteLease(id: number): Promise<boolean> {
+    const result = await db.delete(leases).where(eq(leases.id, id));
+    return result.rowCount > 0;
+  }
+
+  async getMaintenanceRequest(id: number): Promise<MaintenanceRequest | undefined> {
+    const [request] = await db.select().from(maintenanceRequests).where(eq(maintenanceRequests.id, id));
+    return request || undefined;
+  }
+
+  async getMaintenanceRequests(): Promise<MaintenanceRequest[]> {
+    return await db.select().from(maintenanceRequests);
+  }
+
+  async getMaintenanceRequestsForProperty(propertyId: number): Promise<MaintenanceRequest[]> {
+    return await db.select().from(maintenanceRequests).where(eq(maintenanceRequests.propertyId, propertyId));
+  }
+
+  async getMaintenanceRequestsForTenant(tenantId: number): Promise<MaintenanceRequest[]> {
+    return await db.select().from(maintenanceRequests).where(eq(maintenanceRequests.tenantId, tenantId));
+  }
+
+  async createMaintenanceRequest(insertRequest: InsertMaintenanceRequest): Promise<MaintenanceRequest> {
+    const [request] = await db
+      .insert(maintenanceRequests)
+      .values(insertRequest)
+      .returning();
+    return request;
+  }
+
+  async updateMaintenanceRequest(id: number, requestData: Partial<MaintenanceRequest>): Promise<MaintenanceRequest | undefined> {
+    const [request] = await db
+      .update(maintenanceRequests)
+      .set(requestData)
+      .where(eq(maintenanceRequests.id, id))
+      .returning();
+    return request || undefined;
+  }
+
+  async deleteMaintenanceRequest(id: number): Promise<boolean> {
+    const result = await db.delete(maintenanceRequests).where(eq(maintenanceRequests.id, id));
+    return result.rowCount > 0;
+  }
+
+  async getPropertyCount(): Promise<number> {
+    const [result] = await db.select({ count: sql<number>`count(*)` }).from(properties);
+    return result.count;
+  }
+
+  async getActiveLeaseCount(): Promise<number> {
+    const [result] = await db.select({ count: sql<number>`count(*)` }).from(leases).where(eq(leases.status, 'active'));
+    return result.count;
+  }
+
+  async getTenantCount(): Promise<number> {
+    const [result] = await db.select({ count: sql<number>`count(*)` }).from(tenants);
+    return result.count;
+  }
+
+  async getMaintenanceRequestCount(): Promise<number> {
+    const [result] = await db.select({ count: sql<number>`count(*)` }).from(maintenanceRequests);
+    return result.count;
+  }
+
+  async getRecentUsers(limit: number): Promise<User[]> {
+    return await db.select().from(users).orderBy(desc(users.createdAt)).limit(limit);
+  }
+}
+
+export const storage = new DatabaseStorage();
