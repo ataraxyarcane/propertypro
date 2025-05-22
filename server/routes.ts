@@ -1,0 +1,843 @@
+import type { Express, Request, Response } from "express";
+import { createServer, type Server } from "http";
+import { storage } from "./storage";
+import bcrypt from "bcrypt";
+import session from "express-session";
+import { ZodError } from "zod";
+import { formatError } from "zod-validation-error";
+import { 
+  insertUserSchema,
+  insertPropertySchema,
+  insertTenantSchema,
+  insertLeaseSchema,
+  insertMaintenanceRequestSchema
+} from "@shared/schema";
+
+// Express session middleware with memory store for simple setup
+import MemoryStore from "memorystore";
+const MemoryStoreSession = MemoryStore(session);
+
+// JWT token functionality
+import jwt from "jsonwebtoken";
+
+const SECRET_KEY = process.env.JWT_SECRET || "your-secret-key";
+const SESSION_SECRET = process.env.SESSION_SECRET || "your-session-secret";
+
+// Generate JWT token
+function generateToken(user: { id: number; username: string; role: string }) {
+  return jwt.sign(
+    { id: user.id, username: user.username, role: user.role },
+    SECRET_KEY,
+    { expiresIn: "24h" }
+  );
+}
+
+// Auth middleware
+const authMiddleware = (req: Request, res: Response, next: Function) => {
+  const authHeader = req.headers.authorization;
+  
+  if (!authHeader) {
+    return res.status(401).json({ message: "Authorization header missing" });
+  }
+  
+  const token = authHeader.split(" ")[1];
+  
+  if (!token) {
+    return res.status(401).json({ message: "Token missing" });
+  }
+  
+  try {
+    const decoded = jwt.verify(token, SECRET_KEY);
+    req.user = decoded;
+    next();
+  } catch (error) {
+    return res.status(401).json({ message: "Invalid token" });
+  }
+};
+
+// Admin middleware
+const adminMiddleware = (req: Request, res: Response, next: Function) => {
+  if (req.user && req.user.role === "admin") {
+    next();
+  } else {
+    res.status(403).json({ message: "Access denied: Admin privileges required" });
+  }
+};
+
+export async function registerRoutes(app: Express): Promise<Server> {
+  // Setup session middleware
+  app.use(
+    session({
+      cookie: { maxAge: 86400000 }, // 24 hours
+      store: new MemoryStoreSession({
+        checkPeriod: 86400000, // 24 hours
+      }),
+      resave: false,
+      saveUninitialized: false,
+      secret: SESSION_SECRET,
+    })
+  );
+
+  // Authentication Routes
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { username, password } = req.body;
+
+      if (!username || !password) {
+        return res.status(400).json({ message: "Username and password are required" });
+      }
+
+      const user = await storage.getUserByUsername(username);
+
+      if (!user) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      // In a real app, use bcrypt.compare here
+      // For demonstration, we're checking the hashed password directly
+      if (user.password !== password) {
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+          return res.status(401).json({ message: "Invalid credentials" });
+        }
+      }
+
+      if (user.status !== "active") {
+        return res.status(403).json({ 
+          message: "Account is not active. Please contact an administrator."
+        });
+      }
+
+      // Update last login
+      await storage.updateUser(user.id, { lastLogin: new Date() });
+
+      const token = generateToken({
+        id: user.id,
+        username: user.username,
+        role: user.role
+      });
+
+      // Send user info (without password) and token
+      const { password: _, ...userWithoutPassword } = user;
+      res.json({ 
+        user: userWithoutPassword,
+        token 
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Login failed" });
+    }
+  });
+
+  app.post("/api/auth/register", async (req, res) => {
+    try {
+      const userData = insertUserSchema.parse(req.body);
+      
+      // Check if username or email already exists
+      const existingByUsername = await storage.getUserByUsername(userData.username);
+      if (existingByUsername) {
+        return res.status(400).json({ message: "Username already exists" });
+      }
+      
+      if (userData.email) {
+        const existingByEmail = await storage.getUserByEmail(userData.email);
+        if (existingByEmail) {
+          return res.status(400).json({ message: "Email already exists" });
+        }
+      }
+      
+      // Hash password
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(userData.password, salt);
+      
+      // Create user with hashed password and default role
+      const newUser = await storage.createUser({
+        ...userData,
+        password: hashedPassword,
+        role: userData.role || "tenant" // Default to tenant role
+      });
+      
+      // Create tenant record if the role is tenant
+      if (newUser.role === "tenant") {
+        await storage.createTenant({
+          userId: newUser.id,
+          phone: "",
+          emergencyContact: ""
+        });
+      }
+      
+      // Generate token for the new user
+      const token = generateToken({
+        id: newUser.id,
+        username: newUser.username,
+        role: newUser.role
+      });
+      
+      // Return user without password and the token
+      const { password: _, ...userWithoutPassword } = newUser;
+      res.status(201).json({
+        user: userWithoutPassword,
+        token
+      });
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const formattedError = formatError(error);
+        return res.status(400).json({ message: formattedError.message });
+      }
+      res.status(500).json({ message: "Registration failed" });
+    }
+  });
+
+  app.get("/api/auth/me", authMiddleware, async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Return user without password
+      const { password: _, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching user data" });
+    }
+  });
+
+  // User Routes (Admin Only)
+  app.get("/api/users", authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+      const users = await storage.getUsers();
+      
+      // Remove passwords from response
+      const sanitizedUsers = users.map(({ password: _, ...user }) => user);
+      res.json(sanitizedUsers);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching users" });
+    }
+  });
+
+  app.get("/api/users/:id", authMiddleware, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      
+      // Only allow admins to view other user profiles
+      if (req.user.role !== "admin" && req.user.id !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Remove password from response
+      const { password: _, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching user" });
+    }
+  });
+
+  app.put("/api/users/:id", authMiddleware, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      
+      // Only allow admins to update other user profiles
+      if (req.user.role !== "admin" && req.user.id !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // If password is being updated, hash it
+      if (req.body.password) {
+        const salt = await bcrypt.genSalt(10);
+        req.body.password = await bcrypt.hash(req.body.password, salt);
+      }
+      
+      // Don't allow role changes unless admin
+      if (req.body.role && req.user.role !== "admin") {
+        delete req.body.role;
+      }
+      
+      const updatedUser = await storage.updateUser(userId, req.body);
+      
+      if (!updatedUser) {
+        return res.status(500).json({ message: "Error updating user" });
+      }
+      
+      // Remove password from response
+      const { password: _, ...userWithoutPassword } = updatedUser;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const formattedError = formatError(error);
+        return res.status(400).json({ message: formattedError.message });
+      }
+      res.status(500).json({ message: "Error updating user" });
+    }
+  });
+
+  app.delete("/api/users/:id", authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      
+      // Don't allow deleting your own account via this endpoint
+      if (req.user.id === userId) {
+        return res.status(400).json({ message: "Cannot delete your own account" });
+      }
+      
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // If user is a tenant, check if they have active leases
+      if (user.role === "tenant") {
+        const tenant = await storage.getTenantByUserId(userId);
+        
+        if (tenant) {
+          const activeLeases = await storage.getLeasesForTenant(tenant.id);
+          
+          if (activeLeases.length > 0) {
+            return res.status(400).json({ 
+              message: "Cannot delete user with active leases" 
+            });
+          }
+          
+          // Delete tenant record
+          await storage.deleteTenant(tenant.id);
+        }
+      }
+      
+      const deleted = await storage.deleteUser(userId);
+      
+      if (!deleted) {
+        return res.status(500).json({ message: "Error deleting user" });
+      }
+      
+      res.json({ message: "User deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Error deleting user" });
+    }
+  });
+
+  // Property Routes
+  app.get("/api/properties", async (req, res) => {
+    try {
+      const properties = await storage.getProperties();
+      res.json(properties);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching properties" });
+    }
+  });
+
+  app.get("/api/properties/:id", async (req, res) => {
+    try {
+      const propertyId = parseInt(req.params.id);
+      const property = await storage.getProperty(propertyId);
+      
+      if (!property) {
+        return res.status(404).json({ message: "Property not found" });
+      }
+      
+      res.json(property);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching property" });
+    }
+  });
+
+  app.post("/api/properties", authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+      const propertyData = insertPropertySchema.parse(req.body);
+      const newProperty = await storage.createProperty(propertyData);
+      res.status(201).json(newProperty);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const formattedError = formatError(error);
+        return res.status(400).json({ message: formattedError.message });
+      }
+      res.status(500).json({ message: "Error creating property" });
+    }
+  });
+
+  app.put("/api/properties/:id", authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+      const propertyId = parseInt(req.params.id);
+      const property = await storage.getProperty(propertyId);
+      
+      if (!property) {
+        return res.status(404).json({ message: "Property not found" });
+      }
+      
+      const updatedProperty = await storage.updateProperty(propertyId, req.body);
+      
+      if (!updatedProperty) {
+        return res.status(500).json({ message: "Error updating property" });
+      }
+      
+      res.json(updatedProperty);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const formattedError = formatError(error);
+        return res.status(400).json({ message: formattedError.message });
+      }
+      res.status(500).json({ message: "Error updating property" });
+    }
+  });
+
+  app.delete("/api/properties/:id", authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+      const propertyId = parseInt(req.params.id);
+      const property = await storage.getProperty(propertyId);
+      
+      if (!property) {
+        return res.status(404).json({ message: "Property not found" });
+      }
+      
+      // Check for active leases
+      const activeLeases = await storage.getLeasesForProperty(propertyId);
+      
+      if (activeLeases.length > 0) {
+        return res.status(400).json({ 
+          message: "Cannot delete property with active leases" 
+        });
+      }
+      
+      const deleted = await storage.deleteProperty(propertyId);
+      
+      if (!deleted) {
+        return res.status(500).json({ message: "Error deleting property" });
+      }
+      
+      res.json({ message: "Property deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Error deleting property" });
+    }
+  });
+
+  // Lease Routes
+  app.get("/api/leases", authMiddleware, async (req, res) => {
+    try {
+      let leases;
+      
+      // If tenant, only return their leases
+      if (req.user.role === "tenant") {
+        const tenant = await storage.getTenantByUserId(req.user.id);
+        
+        if (!tenant) {
+          return res.json([]);
+        }
+        
+        leases = await storage.getLeasesForTenant(tenant.id);
+      } else {
+        leases = await storage.getLeases();
+      }
+      
+      res.json(leases);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching leases" });
+    }
+  });
+
+  app.get("/api/leases/:id", authMiddleware, async (req, res) => {
+    try {
+      const leaseId = parseInt(req.params.id);
+      const lease = await storage.getLease(leaseId);
+      
+      if (!lease) {
+        return res.status(404).json({ message: "Lease not found" });
+      }
+      
+      // If tenant, ensure they can only view their own leases
+      if (req.user.role === "tenant") {
+        const tenant = await storage.getTenantByUserId(req.user.id);
+        
+        if (!tenant || lease.tenantId !== tenant.id) {
+          return res.status(403).json({ message: "Access denied" });
+        }
+      }
+      
+      res.json(lease);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching lease" });
+    }
+  });
+
+  app.post("/api/leases", authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+      const leaseData = insertLeaseSchema.parse(req.body);
+      
+      // Verify property exists
+      const property = await storage.getProperty(leaseData.propertyId);
+      if (!property) {
+        return res.status(400).json({ message: "Property not found" });
+      }
+      
+      // Verify tenant exists
+      const tenant = await storage.getTenant(leaseData.tenantId);
+      if (!tenant) {
+        return res.status(400).json({ message: "Tenant not found" });
+      }
+      
+      // Check for existing active leases for this property
+      if (property.status !== "available") {
+        return res.status(400).json({ message: "Property is not available" });
+      }
+      
+      const newLease = await storage.createLease(leaseData);
+      
+      // Update property status to leased
+      await storage.updateProperty(property.id, { status: "leased" });
+      
+      res.status(201).json(newLease);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const formattedError = formatError(error);
+        return res.status(400).json({ message: formattedError.message });
+      }
+      res.status(500).json({ message: "Error creating lease" });
+    }
+  });
+
+  app.put("/api/leases/:id", authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+      const leaseId = parseInt(req.params.id);
+      const lease = await storage.getLease(leaseId);
+      
+      if (!lease) {
+        return res.status(404).json({ message: "Lease not found" });
+      }
+      
+      const updatedLease = await storage.updateLease(leaseId, req.body);
+      
+      if (!updatedLease) {
+        return res.status(500).json({ message: "Error updating lease" });
+      }
+      
+      // If lease status changed to inactive/terminated, update property status
+      if (lease.status === "active" && updatedLease.status !== "active") {
+        await storage.updateProperty(lease.propertyId, { status: "available" });
+      } else if (lease.status !== "active" && updatedLease.status === "active") {
+        await storage.updateProperty(lease.propertyId, { status: "leased" });
+      }
+      
+      res.json(updatedLease);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const formattedError = formatError(error);
+        return res.status(400).json({ message: formattedError.message });
+      }
+      res.status(500).json({ message: "Error updating lease" });
+    }
+  });
+
+  app.delete("/api/leases/:id", authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+      const leaseId = parseInt(req.params.id);
+      const lease = await storage.getLease(leaseId);
+      
+      if (!lease) {
+        return res.status(404).json({ message: "Lease not found" });
+      }
+      
+      const deleted = await storage.deleteLease(leaseId);
+      
+      if (!deleted) {
+        return res.status(500).json({ message: "Error deleting lease" });
+      }
+      
+      // Update property status to available if lease was active
+      if (lease.status === "active") {
+        await storage.updateProperty(lease.propertyId, { status: "available" });
+      }
+      
+      res.json({ message: "Lease deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Error deleting lease" });
+    }
+  });
+
+  // Tenant Routes
+  app.get("/api/tenants", authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+      const tenants = await storage.getTenants();
+      res.json(tenants);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching tenants" });
+    }
+  });
+
+  app.get("/api/tenants/:id", authMiddleware, async (req, res) => {
+    try {
+      const tenantId = parseInt(req.params.id);
+      const tenant = await storage.getTenant(tenantId);
+      
+      if (!tenant) {
+        return res.status(404).json({ message: "Tenant not found" });
+      }
+      
+      // If not admin, ensure they can only view their own tenant profile
+      if (req.user.role !== "admin") {
+        const userTenant = await storage.getTenantByUserId(req.user.id);
+        
+        if (!userTenant || userTenant.id !== tenantId) {
+          return res.status(403).json({ message: "Access denied" });
+        }
+      }
+      
+      res.json(tenant);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching tenant" });
+    }
+  });
+
+  app.put("/api/tenants/:id", authMiddleware, async (req, res) => {
+    try {
+      const tenantId = parseInt(req.params.id);
+      const tenant = await storage.getTenant(tenantId);
+      
+      if (!tenant) {
+        return res.status(404).json({ message: "Tenant not found" });
+      }
+      
+      // If not admin, ensure they can only update their own tenant profile
+      if (req.user.role !== "admin") {
+        const userTenant = await storage.getTenantByUserId(req.user.id);
+        
+        if (!userTenant || userTenant.id !== tenantId) {
+          return res.status(403).json({ message: "Access denied" });
+        }
+      }
+      
+      const updatedTenant = await storage.updateTenant(tenantId, req.body);
+      
+      if (!updatedTenant) {
+        return res.status(500).json({ message: "Error updating tenant" });
+      }
+      
+      res.json(updatedTenant);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const formattedError = formatError(error);
+        return res.status(400).json({ message: formattedError.message });
+      }
+      res.status(500).json({ message: "Error updating tenant" });
+    }
+  });
+
+  // Maintenance Request Routes
+  app.get("/api/maintenance", authMiddleware, async (req, res) => {
+    try {
+      let requests;
+      
+      // If tenant, only return their requests
+      if (req.user.role === "tenant") {
+        const tenant = await storage.getTenantByUserId(req.user.id);
+        
+        if (!tenant) {
+          return res.json([]);
+        }
+        
+        requests = await storage.getMaintenanceRequestsForTenant(tenant.id);
+      } else {
+        requests = await storage.getMaintenanceRequests();
+      }
+      
+      res.json(requests);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching maintenance requests" });
+    }
+  });
+
+  app.get("/api/maintenance/:id", authMiddleware, async (req, res) => {
+    try {
+      const requestId = parseInt(req.params.id);
+      const request = await storage.getMaintenanceRequest(requestId);
+      
+      if (!request) {
+        return res.status(404).json({ message: "Maintenance request not found" });
+      }
+      
+      // If tenant, ensure they can only view their own requests
+      if (req.user.role === "tenant") {
+        const tenant = await storage.getTenantByUserId(req.user.id);
+        
+        if (!tenant || request.tenantId !== tenant.id) {
+          return res.status(403).json({ message: "Access denied" });
+        }
+      }
+      
+      res.json(request);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching maintenance request" });
+    }
+  });
+
+  app.post("/api/maintenance", authMiddleware, async (req, res) => {
+    try {
+      const requestData = insertMaintenanceRequestSchema.parse(req.body);
+      
+      // If tenant, ensure they can only create requests for their properties
+      if (req.user.role === "tenant") {
+        const tenant = await storage.getTenantByUserId(req.user.id);
+        
+        if (!tenant) {
+          return res.status(403).json({ message: "Tenant profile not found" });
+        }
+        
+        // Override tenantId with current user's tenant ID
+        requestData.tenantId = tenant.id;
+        
+        // Verify the tenant has a lease for this property
+        const leases = await storage.getLeasesForTenant(tenant.id);
+        const hasLease = leases.some(lease => 
+          lease.propertyId === requestData.propertyId && lease.status === "active"
+        );
+        
+        if (!hasLease) {
+          return res.status(403).json({ 
+            message: "You can only create maintenance requests for properties you are leasing" 
+          });
+        }
+      }
+      
+      // Verify property exists
+      const property = await storage.getProperty(requestData.propertyId);
+      if (!property) {
+        return res.status(400).json({ message: "Property not found" });
+      }
+      
+      // Verify tenant exists
+      const tenant = await storage.getTenant(requestData.tenantId);
+      if (!tenant) {
+        return res.status(400).json({ message: "Tenant not found" });
+      }
+      
+      const newRequest = await storage.createMaintenanceRequest(requestData);
+      res.status(201).json(newRequest);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const formattedError = formatError(error);
+        return res.status(400).json({ message: formattedError.message });
+      }
+      res.status(500).json({ message: "Error creating maintenance request" });
+    }
+  });
+
+  app.put("/api/maintenance/:id", authMiddleware, async (req, res) => {
+    try {
+      const requestId = parseInt(req.params.id);
+      const request = await storage.getMaintenanceRequest(requestId);
+      
+      if (!request) {
+        return res.status(404).json({ message: "Maintenance request not found" });
+      }
+      
+      // If tenant, they can only update their own requests and can't change certain fields
+      if (req.user.role === "tenant") {
+        const tenant = await storage.getTenantByUserId(req.user.id);
+        
+        if (!tenant || request.tenantId !== tenant.id) {
+          return res.status(403).json({ message: "Access denied" });
+        }
+        
+        // Tenants can't change the status
+        if (req.body.status && req.body.status !== request.status) {
+          return res.status(403).json({ 
+            message: "You don't have permission to update the status" 
+          });
+        }
+      }
+      
+      // If status is changing to resolved, set resolvedAt timestamp
+      if (req.body.status === "resolved" && request.status !== "resolved") {
+        req.body.resolvedAt = new Date();
+      }
+      
+      const updatedRequest = await storage.updateMaintenanceRequest(requestId, req.body);
+      
+      if (!updatedRequest) {
+        return res.status(500).json({ message: "Error updating maintenance request" });
+      }
+      
+      res.json(updatedRequest);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const formattedError = formatError(error);
+        return res.status(400).json({ message: formattedError.message });
+      }
+      res.status(500).json({ message: "Error updating maintenance request" });
+    }
+  });
+
+  app.delete("/api/maintenance/:id", authMiddleware, async (req, res) => {
+    try {
+      const requestId = parseInt(req.params.id);
+      const request = await storage.getMaintenanceRequest(requestId);
+      
+      if (!request) {
+        return res.status(404).json({ message: "Maintenance request not found" });
+      }
+      
+      // Only admins or the tenant who created the request can delete it
+      if (req.user.role !== "admin") {
+        const tenant = await storage.getTenantByUserId(req.user.id);
+        
+        if (!tenant || request.tenantId !== tenant.id) {
+          return res.status(403).json({ message: "Access denied" });
+        }
+      }
+      
+      const deleted = await storage.deleteMaintenanceRequest(requestId);
+      
+      if (!deleted) {
+        return res.status(500).json({ message: "Error deleting maintenance request" });
+      }
+      
+      res.json({ message: "Maintenance request deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Error deleting maintenance request" });
+    }
+  });
+
+  // Dashboard Data
+  app.get("/api/dashboard", authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+      const propertyCount = await storage.getPropertyCount();
+      const activeLeaseCount = await storage.getActiveLeaseCount();
+      const tenantCount = await storage.getTenantCount();
+      const maintenanceRequestCount = await storage.getMaintenanceRequestCount();
+      const recentUsers = await storage.getRecentUsers(10);
+      
+      // Remove passwords from user data
+      const sanitizedUsers = recentUsers.map(({ password: _, ...user }) => user);
+      
+      // Get all properties for the recent properties section
+      const properties = await storage.getProperties();
+      
+      res.json({
+        stats: {
+          properties: propertyCount,
+          leases: activeLeaseCount,
+          tenants: tenantCount,
+          maintenance: maintenanceRequestCount
+        },
+        recentUsers: sanitizedUsers,
+        recentProperties: properties
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching dashboard data" });
+    }
+  });
+
+  const httpServer = createServer(app);
+  return httpServer;
+}

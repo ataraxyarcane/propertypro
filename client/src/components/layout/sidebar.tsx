@@ -1,0 +1,248 @@
+import { useEffect } from 'react';
+import { Link, useLocation } from 'wouter';
+import { User, isAdmin } from '@/types';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { 
+  LayoutDashboard, 
+  Users, 
+  BarChart, 
+  Settings, 
+  Building, 
+  FileText,
+  UsersRound, 
+  Drill, 
+  User as UserIcon,
+  LogOut 
+} from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
+
+interface SidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+  user: User | null;
+}
+
+export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
+  const [location] = useLocation();
+  const { logout } = useAuth();
+  
+  // Close sidebar when clicking outside on mobile
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const sidebar = document.getElementById('sidebar');
+      const menuToggle = document.getElementById('sidebar-toggle');
+      
+      if (
+        sidebar && 
+        isOpen && 
+        !sidebar.contains(event.target as Node) && 
+        menuToggle !== event.target && 
+        !menuToggle?.contains(event.target as Node)
+      ) {
+        onClose();
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen, onClose]);
+  
+  const isActive = (path: string) => {
+    return location === path || location.startsWith(`${path}/`);
+  };
+  
+  return (
+    <aside 
+      id="sidebar"
+      className={cn(
+        "bg-white w-64 shadow-md md:shadow-none fixed inset-y-0 flex-shrink-0 md:sticky top-0 z-20 transition-transform duration-300 ease-in-out",
+        isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+      )}
+    >
+      <div className="flex flex-col h-full">
+        <div className="h-16 flex-shrink-0 md:flex items-center px-4 hidden">
+          <h1 className="text-xl font-medium flex items-center">
+            <span className="text-primary mr-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-building">
+                <rect width="16" height="20" x="4" y="2" rx="2" ry="2" />
+                <path d="M9 22v-4h6v4" />
+                <path d="M8 6h.01" />
+                <path d="M16 6h.01" />
+                <path d="M8 10h.01" />
+                <path d="M16 10h.01" />
+                <path d="M8 14h.01" />
+                <path d="M16 14h.01" />
+              </svg>
+            </span>
+            <span className="text-primary font-medium">PropertyPro</span>
+          </h1>
+        </div>
+        
+        <nav className="flex-1 px-2 py-4 overflow-y-auto space-y-1">
+          {/* Admin navigation */}
+          {isAdmin(user) && (
+            <>
+              <div className="px-3 py-2 text-xs font-semibold text-neutral-mid uppercase">
+                Admin Dashboard
+              </div>
+              
+              <Link href="/admin/dashboard">
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    "w-full justify-start",
+                    isActive("/admin/dashboard") && "bg-primary/10 text-primary border-l-4 border-primary"
+                  )}
+                >
+                  <LayoutDashboard className="mr-2 h-4 w-4" />
+                  Dashboard
+                </Button>
+              </Link>
+              
+              <Link href="/admin/users">
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    "w-full justify-start",
+                    isActive("/admin/users") && "bg-primary/10 text-primary border-l-4 border-primary"
+                  )}
+                >
+                  <Users className="mr-2 h-4 w-4" />
+                  User Management
+                </Button>
+              </Link>
+              
+              <Link href="/admin/analytics">
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    "w-full justify-start",
+                    isActive("/admin/analytics") && "bg-primary/10 text-primary border-l-4 border-primary"
+                  )}
+                >
+                  <BarChart className="mr-2 h-4 w-4" />
+                  Analytics
+                </Button>
+              </Link>
+              
+              <Link href="/admin/settings">
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    "w-full justify-start",
+                    isActive("/admin/settings") && "bg-primary/10 text-primary border-l-4 border-primary"
+                  )}
+                >
+                  <Settings className="mr-2 h-4 w-4" />
+                  System Settings
+                </Button>
+              </Link>
+              
+              <div className="border-t border-gray-200 my-2"></div>
+            </>
+          )}
+          
+          <div className="px-3 py-2 text-xs font-semibold text-neutral-mid uppercase">
+            Property Management
+          </div>
+          
+          <Link href="/properties">
+            <Button
+              variant="ghost"
+              className={cn(
+                "w-full justify-start",
+                isActive("/properties") && "bg-primary/10 text-primary border-l-4 border-primary"
+              )}
+            >
+              <Building className="mr-2 h-4 w-4" />
+              Properties
+            </Button>
+          </Link>
+          
+          <Link href="/leases">
+            <Button
+              variant="ghost"
+              className={cn(
+                "w-full justify-start",
+                isActive("/leases") && "bg-primary/10 text-primary border-l-4 border-primary"
+              )}
+            >
+              <FileText className="mr-2 h-4 w-4" />
+              Leases
+            </Button>
+          </Link>
+          
+          <Link href="/tenants">
+            <Button
+              variant="ghost"
+              className={cn(
+                "w-full justify-start",
+                isActive("/tenants") && "bg-primary/10 text-primary border-l-4 border-primary"
+              )}
+            >
+              <UsersRound className="mr-2 h-4 w-4" />
+              Tenants
+            </Button>
+          </Link>
+          
+          <Link href="/maintenance">
+            <Button
+              variant="ghost"
+              className={cn(
+                "w-full justify-start",
+                isActive("/maintenance") && "bg-primary/10 text-primary border-l-4 border-primary"
+              )}
+            >
+              <Drill className="mr-2 h-4 w-4" />
+              Maintenance
+            </Button>
+          </Link>
+          
+          <div className="border-t border-gray-200 my-2"></div>
+          
+          <div className="px-3 py-2 text-xs font-semibold text-neutral-mid uppercase">
+            Your Account
+          </div>
+          
+          <Link href="/profile">
+            <Button
+              variant="ghost"
+              className={cn(
+                "w-full justify-start",
+                isActive("/profile") && "bg-primary/10 text-primary border-l-4 border-primary"
+              )}
+            >
+              <UserIcon className="mr-2 h-4 w-4" />
+              Profile
+            </Button>
+          </Link>
+          
+          <Link href="/settings">
+            <Button
+              variant="ghost"
+              className={cn(
+                "w-full justify-start",
+                isActive("/settings") && "bg-primary/10 text-primary border-l-4 border-primary"
+              )}
+            >
+              <Settings className="mr-2 h-4 w-4" />
+              Settings
+            </Button>
+          </Link>
+          
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-destructive hover:text-destructive"
+            onClick={logout}
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            Sign out
+          </Button>
+        </nav>
+      </div>
+    </aside>
+  );
+}
