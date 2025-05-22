@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/use-simple-auth';
 import Header from './header';
 import Sidebar from './sidebar';
 import { useLocation } from 'wouter';
