@@ -114,9 +114,9 @@ export const getUserInitials = (user?: User | null): string => {
 };
 
 export const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat('en-IE', {
     style: 'currency',
-    currency: 'USD',
+    currency: 'EUR',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount);

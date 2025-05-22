@@ -40,14 +40,14 @@ interface PropertySearchProps {
 }
 
 export default function PropertySearch({ onSearch, onReset }: PropertySearchProps) {
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 5000]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 4000]);
   
   const form = useForm<PropertySearchValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       search: '',
       propertyType: '',
-      priceRange: [0, 5000],
+      priceRange: [0, 4000],
       bedrooms: '',
       bathrooms: '',
     }
@@ -62,11 +62,11 @@ export default function PropertySearch({ onSearch, onReset }: PropertySearchProp
     form.reset({
       search: '',
       propertyType: '',
-      priceRange: [0, 5000],
+      priceRange: [0, 4000],
       bedrooms: '',
       bathrooms: '',
     });
-    setPriceRange([0, 5000]);
+    setPriceRange([0, 4000]);
     onReset();
   };
   
