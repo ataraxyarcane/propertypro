@@ -14,6 +14,8 @@ import AdminAnalytics from "@/pages/admin/analytics";
 import AdminSettings from "@/pages/admin/settings";
 import Properties from "@/pages/properties/index";
 import PropertyDetails from "@/pages/properties/[id]";
+import AddProperty from "@/pages/properties/add";
+import EditProperty from "@/pages/properties/edit";
 import Leases from "@/pages/leases/index";
 import Tenants from "@/pages/tenants/index";
 import Maintenance from "@/pages/maintenance/index";
@@ -43,8 +45,8 @@ function Router() {
       
       {/* Property routes */}
       <Route path="/properties" component={Properties} />
-      <Route path="/properties/add" component={() => import('./pages/properties/add')} />
-      <Route path="/properties/edit/:id" component={() => import('./pages/properties/edit')} />
+      <Route path="/properties/add" component={AddProperty} />
+      <Route path="/properties/edit/:id" component={EditProperty} />
       <Route path="/properties/:id" component={PropertyDetails} />
       
       {/* Other management routes */}
