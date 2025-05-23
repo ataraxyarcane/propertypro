@@ -895,6 +895,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Owner-specific statistics
+  app.get('/api/owner/stats', authMiddleware, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      const userRole = req.user?.role;
+      
+      if (userRole !== 'admin' && userRole !== 'owner') {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+      
+      // Get all properties for this owner
+      const allProperties = await storage.getProperties();
+      const ownerProperties = userRole === 'admin' ? allProperties : allProperties.filter(p => p.ownerId === userId);
+      
+      // Get all leases for owner's properties
+      const allLeases = await storage.getLeases();
+      const ownerLeases = allLeases.filter(lease => 
+        ownerProperties.some(prop => prop.id === lease.propertyId)
+      );
+      
+      // Calculate statistics
+      const totalProperties = ownerProperties.length;
+      const availableProperties = ownerProperties.filter(p => p.status === 'available').length;
+      const leasedProperties = ownerProperties.filter(p => p.status === 'leased').length;
+      const activeLeases = ownerLeases.filter(l => l.status === 'active');
+      const totalTenants = activeLeases.length;
+      const monthlyRevenue = activeLeases.reduce((sum, lease) => sum + lease.monthlyRent, 0);
+      
+      // Get maintenance requests for owner's properties
+      const allMaintenance = await storage.getMaintenanceRequests();
+      const ownerMaintenance = allMaintenance.filter(request => 
+        ownerProperties.some(prop => prop.id === request.propertyId)
+      );
+      const maintenanceRequests = ownerMaintenance.filter(m => m.status === 'pending').length;
+      
+      res.json({
+        totalProperties,
+        availableProperties,
+        leasedProperties,
+        totalTenants,
+        monthlyRevenue,
+        maintenanceRequests
+      });
+    } catch (error) {
+      console.error('Error fetching owner stats:', error);
+      res.status(500).json({ message: 'Failed to fetch owner statistics' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
