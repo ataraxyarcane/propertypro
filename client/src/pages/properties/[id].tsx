@@ -1,12 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRoute } from "wouter";
-import { Property, formatCurrency, formatDate } from "@/types";
+import { Property, formatCurrency, formatDate, isTenant } from "@/types";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-simple-auth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building, Calendar, DollarSign, MapPin, Bed, Bath, Square, Tag, ArrowLeft } from "lucide-react";
+import { Building, Calendar, DollarSign, MapPin, Bed, Bath, Square, Tag, ArrowLeft, FileText } from "lucide-react";
 import { Link } from "wouter";
 import SEO from "@/components/seo";
 import { useEffect, useState } from "react";
@@ -16,6 +17,7 @@ export default function PropertyDetails() {
   const [, params] = useRoute("/properties/:id");
   const propertyId = params?.id;
   const { toast } = useToast();
+  const { user, isAuthenticated } = useAuth();
   const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   const { data: property, isLoading, isError } = useQuery<Property>({
@@ -192,10 +194,32 @@ export default function PropertyDetails() {
                   </div>
                 </div>
                 
+                {/* Apply for Lease Button */}
                 <div className="pt-2">
-                  <Button className="w-full bg-primary hover:bg-primary-dark">
-                    Apply for Lease
-                  </Button>
+                  {property.status === 'available' && isAuthenticated && isTenant(user) && (
+                    <Link href={`/properties/${propertyId}/apply`}>
+                      <Button className="w-full bg-primary hover:bg-primary-dark text-white">
+                        <FileText className="h-4 w-4 mr-2" />
+                        Apply for Lease
+                      </Button>
+                    </Link>
+                  )}
+
+                  {property.status === 'available' && !isAuthenticated && (
+                    <Link href="/login">
+                      <Button variant="outline" className="w-full">
+                        <FileText className="h-4 w-4 mr-2" />
+                        Login to Apply
+                      </Button>
+                    </Link>
+                  )}
+
+                  {property.status !== 'available' && (
+                    <Button disabled className="w-full">
+                      <FileText className="h-4 w-4 mr-2" />
+                      {property.status === 'leased' ? 'Property Leased' : 'Not Available'}
+                    </Button>
+                  )}
                 </div>
               </div>
             </CardContent>

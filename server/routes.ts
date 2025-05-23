@@ -944,6 +944,186 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Lease Applications API endpoints
+  app.get('/api/lease-applications', authMiddleware, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      const userRole = req.user?.role;
+      const { property, user: userParam } = req.query;
+      
+      let applications = await storage.getLeaseApplications();
+      
+      // Filter by property if requested
+      if (property) {
+        const propertyId = parseInt(property as string);
+        applications = await storage.getLeaseApplicationsForProperty(propertyId);
+        
+        // Check if user owns this property or is admin
+        const propertyDetails = await storage.getProperty(propertyId);
+        if (userRole !== 'admin' && propertyDetails?.ownerId !== userId) {
+          return res.status(403).json({ message: 'Access denied' });
+        }
+      }
+      
+      // Filter by user if requested
+      if (userParam) {
+        const requestedUserId = parseInt(userParam as string);
+        // Users can only see their own applications, unless they're admin
+        if (userRole !== 'admin' && userId !== requestedUserId) {
+          return res.status(403).json({ message: 'Access denied' });
+        }
+        applications = await storage.getLeaseApplicationsForUser(requestedUserId);
+      }
+      
+      // If no specific filters and not admin, show only user's applications
+      if (!property && !userParam && userRole !== 'admin') {
+        applications = await storage.getLeaseApplicationsForUser(userId);
+      }
+      
+      res.json(applications);
+    } catch (error) {
+      console.error('Error fetching lease applications:', error);
+      res.status(500).json({ message: 'Failed to fetch applications' });
+    }
+  });
+
+  app.post('/api/lease-applications', authMiddleware, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      const applicationData = req.body;
+      
+      // Verify the applicant is the current user
+      if (applicationData.applicantId !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+      
+      // Check if property exists and is available
+      const property = await storage.getProperty(applicationData.propertyId);
+      if (!property) {
+        return res.status(404).json({ message: 'Property not found' });
+      }
+      
+      // Check if user already has a pending application for this property
+      const existingApplications = await storage.getLeaseApplicationsForUser(userId);
+      const hasExisting = existingApplications.some(app => 
+        app.propertyId === applicationData.propertyId && app.status !== 'withdrawn'
+      );
+      
+      if (hasExisting) {
+        return res.status(400).json({ message: 'You already have an application for this property' });
+      }
+      
+      const application = await storage.createLeaseApplication(applicationData);
+      res.status(201).json(application);
+    } catch (error) {
+      console.error('Error creating lease application:', error);
+      res.status(500).json({ message: 'Failed to create application' });
+    }
+  });
+
+  app.get('/api/lease-applications/:id', authMiddleware, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      const userRole = req.user?.role;
+      const applicationId = parseInt(req.params.id);
+      
+      const application = await storage.getLeaseApplication(applicationId);
+      if (!application) {
+        return res.status(404).json({ message: 'Application not found' });
+      }
+      
+      // Check access permissions
+      const property = await storage.getProperty(application.propertyId);
+      const canAccess = userRole === 'admin' || 
+                       application.applicantId === userId || 
+                       property?.ownerId === userId;
+      
+      if (!canAccess) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+      
+      res.json(application);
+    } catch (error) {
+      console.error('Error fetching lease application:', error);
+      res.status(500).json({ message: 'Failed to fetch application' });
+    }
+  });
+
+  app.put('/api/lease-applications/:id', authMiddleware, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      const userRole = req.user?.role;
+      const applicationId = parseInt(req.params.id);
+      const updateData = req.body;
+      
+      const application = await storage.getLeaseApplication(applicationId);
+      if (!application) {
+        return res.status(404).json({ message: 'Application not found' });
+      }
+      
+      // Check permissions
+      const property = await storage.getProperty(application.propertyId);
+      const isOwner = property?.ownerId === userId;
+      const isApplicant = application.applicantId === userId;
+      const isAdmin = userRole === 'admin';
+      
+      // Applicants can only update certain fields and only if status is pending
+      if (isApplicant && !isOwner && !isAdmin) {
+        if (application.status !== 'pending') {
+          return res.status(400).json({ message: 'Cannot update application after review' });
+        }
+        // Restrict fields that applicants can update
+        const allowedFields = ['motivation', 'additionalComments', 'desiredMoveInDate', 'leaseDuration'];
+        const restrictedUpdate = Object.keys(updateData).every(key => allowedFields.includes(key));
+        if (!restrictedUpdate) {
+          return res.status(403).json({ message: 'Access denied to update these fields' });
+        }
+      } else if (!isOwner && !isAdmin) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+      
+      // Property owners and admins can update status
+      if ((isOwner || isAdmin) && updateData.status) {
+        updateData.reviewedBy = userId;
+        updateData.reviewedAt = new Date();
+      }
+      
+      const updatedApplication = await storage.updateLeaseApplication(applicationId, updateData);
+      res.json(updatedApplication);
+    } catch (error) {
+      console.error('Error updating lease application:', error);
+      res.status(500).json({ message: 'Failed to update application' });
+    }
+  });
+
+  app.delete('/api/lease-applications/:id', authMiddleware, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      const userRole = req.user?.role;
+      const applicationId = parseInt(req.params.id);
+      
+      const application = await storage.getLeaseApplication(applicationId);
+      if (!application) {
+        return res.status(404).json({ message: 'Application not found' });
+      }
+      
+      // Only applicants can withdraw their own applications or admins can delete any
+      if (userRole !== 'admin' && application.applicantId !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+      
+      const deleted = await storage.deleteLeaseApplication(applicationId);
+      if (!deleted) {
+        return res.status(500).json({ message: 'Failed to delete application' });
+      }
+      
+      res.json({ message: 'Application deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting lease application:', error);
+      res.status(500).json({ message: 'Failed to delete application' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
