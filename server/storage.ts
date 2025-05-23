@@ -3,7 +3,8 @@ import {
   properties, Property, InsertProperty,
   tenants, Tenant, InsertTenant,
   leases, Lease, InsertLease,
-  maintenanceRequests, MaintenanceRequest, InsertMaintenanceRequest
+  maintenanceRequests, MaintenanceRequest, InsertMaintenanceRequest,
+  leaseApplications, LeaseApplication, InsertLeaseApplication
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, sql } from "drizzle-orm";
@@ -55,6 +56,15 @@ export interface IStorage {
   updateMaintenanceRequest(id: number, requestData: Partial<MaintenanceRequest>): Promise<MaintenanceRequest | undefined>;
   deleteMaintenanceRequest(id: number): Promise<boolean>;
   
+  // Lease Application operations
+  getLeaseApplication(id: number): Promise<LeaseApplication | undefined>;
+  getLeaseApplications(): Promise<LeaseApplication[]>;
+  getLeaseApplicationsForProperty(propertyId: number): Promise<LeaseApplication[]>;
+  getLeaseApplicationsForUser(userId: number): Promise<LeaseApplication[]>;
+  createLeaseApplication(application: InsertLeaseApplication): Promise<LeaseApplication>;
+  updateLeaseApplication(id: number, applicationData: Partial<LeaseApplication>): Promise<LeaseApplication | undefined>;
+  deleteLeaseApplication(id: number): Promise<boolean>;
+
   // Dashboard queries
   getPropertyCount(): Promise<number>;
   getActiveLeaseCount(): Promise<number>;
@@ -69,6 +79,7 @@ export class MemStorage implements IStorage {
   private tenants: Map<number, Tenant>;
   private leases: Map<number, Lease>;
   private maintenanceRequests: Map<number, MaintenanceRequest>;
+  private leaseApplications: Map<number, LeaseApplication>;
   
   private userIdCounter: number;
   private propertyIdCounter: number;

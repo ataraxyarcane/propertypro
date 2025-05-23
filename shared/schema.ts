@@ -124,6 +124,55 @@ export const insertMaintenanceRequestSchema = createInsertSchema(maintenanceRequ
   resolvedAt: true,
 });
 
+// Lease Applications
+export const leaseApplications = pgTable("lease_applications", {
+  id: serial("id").primaryKey(),
+  propertyId: integer("property_id").notNull(),
+  applicantId: integer("applicant_id").notNull(),
+  
+  // Personal Information
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone").notNull(),
+  dateOfBirth: text("date_of_birth").notNull(),
+  
+  // Employment Information
+  employmentStatus: text("employment_status").notNull(),
+  employer: text("employer"),
+  jobTitle: text("job_title"),
+  monthlyIncome: doublePrecision("monthly_income").notNull(),
+  employmentDuration: text("employment_duration"),
+  
+  // References
+  previousLandlord: text("previous_landlord"),
+  previousLandlordPhone: text("previous_landlord_phone"),
+  emergencyContact: text("emergency_contact").notNull(),
+  emergencyContactPhone: text("emergency_contact_phone").notNull(),
+  
+  // Lease Details
+  desiredMoveInDate: text("desired_move_in_date").notNull(),
+  leaseDuration: integer("lease_duration").notNull(), // in months
+  additionalOccupants: integer("additional_occupants").default(0),
+  petsDescription: text("pets_description"),
+  
+  // Application Details
+  motivation: text("motivation"),
+  additionalComments: text("additional_comments"),
+  status: text("status").notNull().default("pending"), // pending, approved, rejected, withdrawn
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  reviewedAt: timestamp("reviewed_at"),
+  reviewedBy: integer("reviewed_by"),
+});
+
+export const insertLeaseApplicationSchema = createInsertSchema(leaseApplications).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Type exports
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -137,3 +186,5 @@ export type Lease = typeof leases.$inferSelect;
 export type InsertLease = z.infer<typeof insertLeaseSchema>;
 export type MaintenanceRequest = typeof maintenanceRequests.$inferSelect;
 export type InsertMaintenanceRequest = z.infer<typeof insertMaintenanceRequestSchema>;
+export type LeaseApplication = typeof leaseApplications.$inferSelect;
+export type InsertLeaseApplication = z.infer<typeof insertLeaseApplicationSchema>;
