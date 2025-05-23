@@ -90,6 +90,14 @@ export const isAdmin = (user?: User | null): boolean => {
   return user?.role === 'admin';
 };
 
+export const isPropertyOwner = (user?: User | null): boolean => {
+  return user?.role === 'property_owner';
+};
+
+export const canManageProperties = (user?: User | null): boolean => {
+  return user?.role === 'admin' || user?.role === 'property_owner';
+};
+
 export const isTenant = (user?: User | null): boolean => {
   return user?.role === 'tenant';
 };
