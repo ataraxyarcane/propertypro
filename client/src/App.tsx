@@ -89,11 +89,11 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <AuthProvider>
-          <Layout>
-            <AuthOverlay>
+          <AuthOverlay>
+            <Layout>
               <Router />
-            </AuthOverlay>
-          </Layout>
+            </Layout>
+          </AuthOverlay>
         </AuthProvider>
         <Toaster />
       </TooltipProvider>
