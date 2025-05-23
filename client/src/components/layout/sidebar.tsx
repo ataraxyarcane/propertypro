@@ -63,23 +63,7 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
       )}
     >
       <div className="flex flex-col h-full">
-        <div className="h-16 flex-shrink-0 md:flex items-center px-4 hidden">
-          <h1 className="text-xl font-medium flex items-center">
-            <span className="text-primary mr-2">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-building">
-                <rect width="16" height="20" x="4" y="2" rx="2" ry="2" />
-                <path d="M9 22v-4h6v4" />
-                <path d="M8 6h.01" />
-                <path d="M16 6h.01" />
-                <path d="M8 10h.01" />
-                <path d="M16 10h.01" />
-                <path d="M8 14h.01" />
-                <path d="M16 14h.01" />
-              </svg>
-            </span>
-            <span className="text-primary font-medium">PropertyPro</span>
-          </h1>
-        </div>
+
         
         <nav className="flex-1 px-2 py-4 overflow-y-auto space-y-1">
           {/* Admin navigation */}
