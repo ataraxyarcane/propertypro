@@ -120,7 +120,7 @@ export class MemStorage implements IStorage {
       price: 2450,
       bedrooms: 2,
       bathrooms: 2,
-      squareFeet: 950,
+      squareMeters: 88,
       features: ["Pet friendly", "Gym", "Pool"],
       images: [
         "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=450",
@@ -140,7 +140,7 @@ export class MemStorage implements IStorage {
       price: 3200,
       bedrooms: 4,
       bathrooms: 3,
-      squareFeet: 2100,
+      squareMeters: 195,
       features: ["Garage", "Backyard", "Fireplace"],
       images: [
         "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=450"
@@ -159,7 +159,7 @@ export class MemStorage implements IStorage {
       price: 1850,
       bedrooms: 1,
       bathrooms: 1,
-      squareFeet: 750,
+      squareMeters: 70,
       features: ["Gym", "Rooftop Deck", "Laundry"],
       images: [
         "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=450"
@@ -256,7 +256,7 @@ export class MemStorage implements IStorage {
       description: insertProperty.description || null,
       bedrooms: insertProperty.bedrooms || null,
       bathrooms: insertProperty.bathrooms || null,
-      squareFeet: insertProperty.squareFeet || null,
+      squareMeters: insertProperty.squareMeters || null,
       features: insertProperty.features || null,
       images: insertProperty.images || null
     };
