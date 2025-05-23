@@ -493,6 +493,13 @@ export class DatabaseStorage implements IStorage {
     return result.rowCount > 0;
   }
 
+  // Property Owner operations (simplified for current implementation)
+  async createPropertyOwner(propertyOwner: any): Promise<any> {
+    // For now, we'll just return a simple success response
+    // In a full implementation, this would create a property owner record in the database
+    return { success: true, ...propertyOwner };
+  }
+
   async getProperty(id: number): Promise<Property | undefined> {
     const [property] = await db.select().from(properties).where(eq(properties.id, id));
     return property || undefined;
