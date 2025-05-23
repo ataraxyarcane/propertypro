@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
-import { User, isAdmin } from '@/types';
+import { User, isAdmin, isPropertyOwner, canManageProperties } from '@/types';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { 
@@ -129,8 +129,57 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
             </>
           )}
           
+          {/* Property Owner Dashboard */}
+          {isPropertyOwner(user) && (
+            <>
+              <div className="px-3 py-2 text-xs font-semibold text-neutral-mid uppercase">
+                Property Management
+              </div>
+              
+              <Link href="/owner/dashboard">
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    "w-full justify-start",
+                    isActive("/owner/dashboard") && "bg-primary/10 text-primary border-l-4 border-primary"
+                  )}
+                >
+                  <LayoutDashboard className="mr-2 h-4 w-4" />
+                  Owner Dashboard
+                </Button>
+              </Link>
+              
+              <Link href="/properties/add">
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    "w-full justify-start",
+                    isActive("/properties/add") && "bg-primary/10 text-primary border-l-4 border-primary"
+                  )}
+                >
+                  <Building className="mr-2 h-4 w-4" />
+                  Add Property
+                </Button>
+              </Link>
+              
+              <Link href="/properties">
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    "w-full justify-start",
+                    isActive("/properties") && "bg-primary/10 text-primary border-l-4 border-primary"
+                  )}
+                >
+                  <Building className="mr-2 h-4 w-4" />
+                  My Properties
+                </Button>
+              </Link>
+            </>
+          )}
+          
+          {/* General Properties Browsing */}
           <div className="px-3 py-2 text-xs font-semibold text-neutral-mid uppercase">
-            Property Management
+            {isPropertyOwner(user) ? 'Browse All Properties' : 'Properties'}
           </div>
           
           <Link href="/properties">
@@ -142,36 +191,42 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
               )}
             >
               <Building className="mr-2 h-4 w-4" />
-              Properties
+              {isPropertyOwner(user) ? 'All Properties' : 'Properties'}
             </Button>
           </Link>
           
-          <Link href="/leases">
-            <Button
-              variant="ghost"
-              className={cn(
-                "w-full justify-start",
-                isActive("/leases") && "bg-primary/10 text-primary border-l-4 border-primary"
-              )}
-            >
-              <FileText className="mr-2 h-4 w-4" />
-              Leases
-            </Button>
-          </Link>
+          {/* Management features - visible to admins and property owners */}
+          {canManageProperties(user) && (
+            <>
+              <Link href="/leases">
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    "w-full justify-start",
+                    isActive("/leases") && "bg-primary/10 text-primary border-l-4 border-primary"
+                  )}
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  Leases
+                </Button>
+              </Link>
+              
+              <Link href="/tenants">
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    "w-full justify-start",
+                    isActive("/tenants") && "bg-primary/10 text-primary border-l-4 border-primary"
+                  )}
+                >
+                  <UsersRound className="mr-2 h-4 w-4" />
+                  Tenants
+                </Button>
+              </Link>
+            </>
+          )}
           
-          <Link href="/tenants">
-            <Button
-              variant="ghost"
-              className={cn(
-                "w-full justify-start",
-                isActive("/tenants") && "bg-primary/10 text-primary border-l-4 border-primary"
-              )}
-            >
-              <UsersRound className="mr-2 h-4 w-4" />
-              Tenants
-            </Button>
-          </Link>
-          
+          {/* Maintenance - visible to all users but with different context */}
           <Link href="/maintenance">
             <Button
               variant="ghost"
@@ -181,7 +236,7 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
               )}
             >
               <Drill className="mr-2 h-4 w-4" />
-              Maintenance
+              {canManageProperties(user) ? 'Maintenance Requests' : 'Request Maintenance'}
             </Button>
           </Link>
           
