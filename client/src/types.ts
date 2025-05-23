@@ -30,7 +30,7 @@ export interface Property {
   price: number;
   bedrooms?: number;
   bathrooms?: number;
-  squareFeet?: number;
+  squareMeters?: number;
   features: string[];
   images: string[];
   status: 'available' | 'leased' | 'maintenance';
