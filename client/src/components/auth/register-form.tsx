@@ -42,12 +42,12 @@ export default function RegisterForm() {
   const { register } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [userType, setUserType] = useState<string>('');
+  const [userType, setUserType] = useState<string>('tenant');
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      userType: undefined,
+      userType: 'tenant',
       username: '',
       email: '',
       password: '',
