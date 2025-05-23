@@ -1,39 +1,80 @@
-import { useQuery } from "@tanstack/react-query";
-import { MaintenanceRequest } from "@/types";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { MaintenanceRequest, Property } from "@/types";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-simple-auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Drill, Building, Calendar, AlertTriangle, CheckCircle, Clock, Filter } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, Wrench, Building, Calendar, AlertTriangle, CheckCircle2, Clock, User } from "lucide-react";
 import { formatDate } from "@/types";
-import { useAuth } from "@/hooks/use-simple-auth";
-import { isAdmin } from "@/types";
+import { Link } from "wouter";
 import SEO from "@/components/seo";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function Maintenance() {
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [priorityFilter, setPriorityFilter] = useState<string>("all");
+  const [propertyFilter, setPropertyFilter] = useState<string>("all");
   const { toast } = useToast();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
-  const { data: requests, isLoading, isError } = useQuery<MaintenanceRequest[]>({
-    queryKey: ["/api/maintenance"],
-    onError: () => {
+  // Get maintenance requests with proper authentication
+  const { data: requests = [], isLoading } = useQuery<MaintenanceRequest[]>({
+    queryKey: ['/api/maintenance'],
+    retry: 1,
+  });
+
+  // Get properties for filtering (owner's properties only)
+  const { data: properties = [] } = useQuery<Property[]>({
+    queryKey: ['/api/properties'],
+  });
+
+  const ownerProperties = properties.filter(property => 
+    user?.role === 'admin' || property.ownerId === user?.id
+  );
+
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: number; status: string }) => {
+      return apiRequest(`/api/maintenance/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ 
+          status,
+          resolvedAt: status === 'resolved' ? new Date().toISOString() : null
+        }),
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Maintenance request status updated",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/maintenance'] });
+    },
+    onError: (error: any) => {
       toast({
         title: "Error",
-        description: "Failed to load maintenance requests",
+        description: error.message || "Failed to update status",
         variant: "destructive",
       });
     },
   });
 
-  // Fetch properties to display property details in maintenance cards
-  const { data: properties } = useQuery({
-    queryKey: ["/api/properties"],
-  });
+  // Filter requests for property owners (only their properties)
+  const ownerFilteredRequests = user?.role === 'admin' 
+    ? requests 
+    : requests.filter(request => 
+        ownerProperties.some(property => property.id === request.propertyId)
+      );
 
-  // Helper function to get property details by ID
-  const getPropertyById = (propertyId: number) => {
-    return properties?.find((property: any) => property.id === propertyId);
-  };
+  const filteredRequests = ownerFilteredRequests.filter(request => {
+    const statusMatch = statusFilter === "all" || request.status === statusFilter;
+    const priorityMatch = priorityFilter === "all" || request.priority === priorityFilter;
+    const propertyMatch = propertyFilter === "all" || request.propertyId.toString() === propertyFilter;
+    return statusMatch && priorityMatch && propertyMatch;
+  });
 
   // Helper function to get priority badge styling
   const getPriorityBadge = (priority: string) => {

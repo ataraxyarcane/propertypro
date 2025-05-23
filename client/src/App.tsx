@@ -22,6 +22,7 @@ import OwnerDashboard from "@/pages/owner/dashboard";
 import Leases from "@/pages/leases/index";
 import Tenants from "@/pages/tenants/index";
 import Maintenance from "@/pages/maintenance/index";
+import AddMaintenanceRequest from "@/pages/maintenance/add";
 import Profile from "@/pages/profile/index";
 import Settings from "@/pages/settings";
 import AuthOverlay from "@/components/auth/auth-overlay";
@@ -61,6 +62,7 @@ function Router() {
       <Route path="/leases" component={Leases} />
       <Route path="/tenants" component={Tenants} />
       <Route path="/maintenance" component={Maintenance} />
+      <Route path="/maintenance/add" component={AddMaintenanceRequest} />
       
       {/* User account routes */}
       <Route path="/profile" component={Profile} />
