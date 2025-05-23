@@ -16,6 +16,7 @@ import Properties from "@/pages/properties/index";
 import PropertyDetails from "@/pages/properties/[id]";
 import AddProperty from "@/pages/properties/add";
 import EditProperty from "@/pages/properties/edit";
+import ApplyForProperty from "@/pages/properties/apply";
 import PropertyOwnerRegister from "@/pages/owner/register";
 import OwnerDashboard from "@/pages/owner/dashboard";
 import Leases from "@/pages/leases/index";
@@ -49,6 +50,7 @@ function Router() {
       <Route path="/properties" component={Properties} />
       <Route path="/properties/add" component={AddProperty} />
       <Route path="/properties/edit/:id" component={EditProperty} />
+      <Route path="/properties/:id/apply" component={ApplyForProperty} />
       <Route path="/properties/:id" component={PropertyDetails} />
       
       {/* Property Owner routes */}

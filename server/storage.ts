@@ -86,6 +86,7 @@ export class MemStorage implements IStorage {
   private tenantIdCounter: number;
   private leaseIdCounter: number;
   private maintenanceRequestIdCounter: number;
+  private leaseApplicationIdCounter: number;
 
   constructor() {
     this.users = new Map();
@@ -93,12 +94,14 @@ export class MemStorage implements IStorage {
     this.tenants = new Map();
     this.leases = new Map();
     this.maintenanceRequests = new Map();
+    this.leaseApplications = new Map();
     
     this.userIdCounter = 1;
     this.propertyIdCounter = 1;
     this.tenantIdCounter = 1;
     this.leaseIdCounter = 1;
     this.maintenanceRequestIdCounter = 1;
+    this.leaseApplicationIdCounter = 1;
     
     // Initialize with admin user
     this.createUser({
@@ -460,6 +463,55 @@ export class MemStorage implements IStorage {
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, limit);
   }
+
+  // Lease Application operations
+  async getLeaseApplication(id: number): Promise<LeaseApplication | undefined> {
+    return this.leaseApplications.get(id);
+  }
+
+  async getLeaseApplications(): Promise<LeaseApplication[]> {
+    return Array.from(this.leaseApplications.values());
+  }
+
+  async getLeaseApplicationsForProperty(propertyId: number): Promise<LeaseApplication[]> {
+    return Array.from(this.leaseApplications.values()).filter(app => app.propertyId === propertyId);
+  }
+
+  async getLeaseApplicationsForUser(userId: number): Promise<LeaseApplication[]> {
+    return Array.from(this.leaseApplications.values()).filter(app => app.applicantId === userId);
+  }
+
+  async createLeaseApplication(insertApplication: InsertLeaseApplication): Promise<LeaseApplication> {
+    const application: LeaseApplication = {
+      id: this.leaseApplicationIdCounter++,
+      ...insertApplication,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      reviewedAt: null,
+      reviewedBy: null,
+    };
+    
+    this.leaseApplications.set(application.id, application);
+    return application;
+  }
+
+  async updateLeaseApplication(id: number, applicationData: Partial<LeaseApplication>): Promise<LeaseApplication | undefined> {
+    const existing = this.leaseApplications.get(id);
+    if (!existing) return undefined;
+    
+    const updated: LeaseApplication = {
+      ...existing,
+      ...applicationData,
+      updatedAt: new Date(),
+    };
+    
+    this.leaseApplications.set(id, updated);
+    return updated;
+  }
+
+  async deleteLeaseApplication(id: number): Promise<boolean> {
+    return this.leaseApplications.delete(id);
+  }
 }
 
 export class DatabaseStorage implements IStorage {
@@ -678,6 +730,50 @@ export class DatabaseStorage implements IStorage {
 
   async getRecentUsers(limit: number): Promise<User[]> {
     return await db.select().from(users).orderBy(desc(users.createdAt)).limit(limit);
+  }
+
+  // Lease Application operations
+  async getLeaseApplication(id: number): Promise<LeaseApplication | undefined> {
+    const [application] = await db.select().from(leaseApplications).where(eq(leaseApplications.id, id));
+    return application || undefined;
+  }
+
+  async getLeaseApplications(): Promise<LeaseApplication[]> {
+    return await db.select().from(leaseApplications).orderBy(desc(leaseApplications.createdAt));
+  }
+
+  async getLeaseApplicationsForProperty(propertyId: number): Promise<LeaseApplication[]> {
+    return await db.select().from(leaseApplications)
+      .where(eq(leaseApplications.propertyId, propertyId))
+      .orderBy(desc(leaseApplications.createdAt));
+  }
+
+  async getLeaseApplicationsForUser(userId: number): Promise<LeaseApplication[]> {
+    return await db.select().from(leaseApplications)
+      .where(eq(leaseApplications.applicantId, userId))
+      .orderBy(desc(leaseApplications.createdAt));
+  }
+
+  async createLeaseApplication(insertApplication: InsertLeaseApplication): Promise<LeaseApplication> {
+    const [application] = await db
+      .insert(leaseApplications)
+      .values(insertApplication)
+      .returning();
+    return application;
+  }
+
+  async updateLeaseApplication(id: number, applicationData: Partial<LeaseApplication>): Promise<LeaseApplication | undefined> {
+    const [application] = await db
+      .update(leaseApplications)
+      .set({ ...applicationData, updatedAt: new Date() })
+      .where(eq(leaseApplications.id, id))
+      .returning();
+    return application || undefined;
+  }
+
+  async deleteLeaseApplication(id: number): Promise<boolean> {
+    const result = await db.delete(leaseApplications).where(eq(leaseApplications.id, id));
+    return (result.rowCount || 0) > 0;
   }
 }
 
