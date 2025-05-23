@@ -99,7 +99,10 @@ export default function Properties() {
           </div>
           
           {isAdmin(user) && (
-            <Button className="bg-primary hover:bg-primary-dark mt-4 md:mt-0 flex items-center gap-2">
+            <Button 
+              onClick={() => setLocation('/properties/add')}
+              className="bg-primary hover:bg-primary-dark mt-4 md:mt-0 flex items-center gap-2"
+            >
               <Plus className="h-4 w-4" />
               Add Property
             </Button>

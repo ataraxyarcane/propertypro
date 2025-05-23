@@ -43,6 +43,8 @@ function Router() {
       
       {/* Property routes */}
       <Route path="/properties" component={Properties} />
+      <Route path="/properties/add" component={() => import('./pages/properties/add')} />
+      <Route path="/properties/edit/:id" component={() => import('./pages/properties/edit')} />
       <Route path="/properties/:id" component={PropertyDetails} />
       
       {/* Other management routes */}
