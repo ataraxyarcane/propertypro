@@ -78,6 +78,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     })
   );
 
+  // Property Owner Registration
+  app.post("/api/auth/register-owner", async (req, res) => {
+    try {
+      const { username, email, password, firstName, lastName, companyName, phone, address, city, state, zipCode, website, description } = req.body;
+      
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ message: "User already exists with this email" });
+      }
+
+      const existingUsername = await storage.getUserByUsername(username);
+      if (existingUsername) {
+        return res.status(400).json({ message: "Username already taken" });
+      }
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Create user account with property_owner role
+      const user = await storage.createUser({
+        username,
+        email,
+        password: hashedPassword,
+        firstName,
+        lastName,
+        role: "property_owner",
+      });
+
+      // Create property owner profile
+      await storage.createPropertyOwner({
+        userId: user.id,
+        companyName,
+        phone,
+        address,
+        city,
+        state,
+        zipCode,
+        website,
+        description,
+      });
+
+      // Generate token
+      const token = generateToken(user);
+
+      res.status(201).json({
+        message: "Property owner account created successfully",
+        user: { ...user, password: undefined },
+        token,
+      });
+    } catch (error) {
+      console.error("Registration error:", error);
+      res.status(500).json({ message: "Failed to create property owner account" });
+    }
+  });
+
   // Authentication Routes
   app.post("/api/auth/login", async (req, res) => {
     try {
