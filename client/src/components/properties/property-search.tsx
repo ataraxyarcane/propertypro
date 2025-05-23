@@ -122,9 +122,9 @@ export default function PropertySearch({ onSearch, onReset }: PropertySearchProp
             <div>
               <FormLabel>Price Range: {formatCurrency(priceRange[0])} - {formatCurrency(priceRange[1])}</FormLabel>
               <Slider
-                defaultValue={[0, 5000]}
+                defaultValue={[0, 4000]}
                 min={0}
-                max={10000}
+                max={8000}
                 step={100}
                 value={priceRange}
                 onValueChange={(value) => setPriceRange(value as [number, number])}
