@@ -32,7 +32,7 @@ export default function Maintenance() {
     queryKey: ['/api/properties'],
   });
 
-  const ownerProperties = properties.filter(property => 
+  const ownerProperties = properties.filter((property: any) => 
     user?.role === 'admin' || property.ownerId === user?.id
   );
 
@@ -76,150 +76,272 @@ export default function Maintenance() {
     return statusMatch && priorityMatch && propertyMatch;
   });
 
-  // Helper function to get priority badge styling
-  const getPriorityBadge = (priority: string) => {
-    switch (priority) {
-      case 'high':
-        return <Badge className="bg-destructive text-white">High</Badge>;
-      case 'medium':
-        return <Badge className="bg-warning text-white">Medium</Badge>;
-      case 'low':
-        return <Badge variant="outline">Low</Badge>;
-      default:
-        return <Badge variant="outline">Unknown</Badge>;
-    }
-  };
-
-  // Helper function to get status badge styling
-  const getStatusBadge = (status: string) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending':
-        return <Badge className="bg-warning text-white">Pending</Badge>;
-      case 'in_progress':
-        return <Badge className="bg-primary text-white">In Progress</Badge>;
-      case 'resolved':
-        return <Badge className="bg-success text-white">Resolved</Badge>;
-      default:
-        return <Badge variant="outline">Unknown</Badge>;
+      case 'pending': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
+      case 'in_progress': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
+      case 'resolved': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
     }
   };
 
-  // Helper function to get status icon
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'high': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
+      case 'medium': return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300';
+      case 'low': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
+    }
+  };
+
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'pending':
-        return <Clock className="h-5 w-5 text-warning" />;
-      case 'in_progress':
-        return <Drill className="h-5 w-5 text-primary" />;
-      case 'resolved':
-        return <CheckCircle className="h-5 w-5 text-success" />;
-      default:
-        return <AlertTriangle className="h-5 w-5 text-neutral-mid" />;
+      case 'pending': return <Clock className="h-4 w-4" />;
+      case 'in_progress': return <Wrench className="h-4 w-4" />;
+      case 'resolved': return <CheckCircle2 className="h-4 w-4" />;
+      default: return <AlertTriangle className="h-4 w-4" />;
     }
   };
+
+  const getPropertyName = (propertyId: number) => {
+    const property = properties.find((p: any) => p.id === propertyId);
+    return property ? property.name : `Property #${propertyId}`;
+  };
+
+  const getRequestStats = () => {
+    const pending = ownerFilteredRequests.filter(r => r.status === 'pending').length;
+    const inProgress = ownerFilteredRequests.filter(r => r.status === 'in_progress').length;
+    const resolved = ownerFilteredRequests.filter(r => r.status === 'resolved').length;
+    const high = ownerFilteredRequests.filter(r => r.priority === 'high').length;
+    
+    return { pending, inProgress, resolved, high };
+  };
+
+  const stats = getRequestStats();
+
+  if (isLoading) {
+    return (
+      <div className="py-12 text-center">
+        <p className="text-neutral-mid">Loading maintenance requests...</p>
+      </div>
+    );
+  }
 
   return (
     <>
       <SEO 
-        title="Maintenance Requests" 
-        description="Manage property maintenance and service requests" 
+        title="Maintenance Requests - PropertyPro"
+        description="Manage property maintenance requests and track repair status."
       />
       
-      <div className="py-6 px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-medium">Maintenance Requests</h1>
-            <p className="text-neutral-mid">Manage property maintenance and service requests</p>
+            <h1 className="text-2xl font-bold text-neutral-dark">Maintenance Requests</h1>
+            <p className="text-neutral-mid">Track and manage property maintenance issues</p>
           </div>
-          
-          <div className="flex gap-2 mt-4 md:mt-0">
-            <Button variant="outline" className="flex items-center gap-2">
-              <Filter className="h-4 w-4" />
-              Filter
-            </Button>
-            <Button className="bg-primary hover:bg-primary-dark flex items-center gap-2">
-              <Plus className="h-4 w-4" />
+          <Link href="/maintenance/add">
+            <Button className="bg-primary hover:bg-primary-dark">
+              <Plus className="h-4 w-4 mr-2" />
               New Request
             </Button>
-          </div>
+          </Link>
         </div>
-        
-        {isLoading ? (
-          <div className="py-12 text-center">
-            <p className="text-neutral-mid">Loading maintenance requests...</p>
-          </div>
-        ) : isError ? (
-          <div className="py-12 text-center">
-            <p className="text-destructive">Error loading maintenance requests</p>
-          </div>
-        ) : requests && requests.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {requests.map(request => {
-              const property = getPropertyById(request.propertyId);
-              
-              return (
-                <Card key={request.id} className="overflow-hidden">
-                  <div className={
-                    request.priority === 'high' ? "bg-destructive h-2" :
-                    request.priority === 'medium' ? "bg-warning h-2" :
-                    "bg-secondary h-2"
-                  }></div>
-                  <CardHeader className="pb-2">
-                    <div className="flex justify-between items-start">
-                      <CardTitle className="text-lg">{request.title}</CardTitle>
-                      {getStatusBadge(request.status)}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <p className="text-neutral-mid">
-                      {request.description.length > 100 
-                        ? `${request.description.substring(0, 100)}...` 
-                        : request.description}
-                    </p>
-                    
-                    <div className="flex items-start">
-                      <Building className="h-5 w-5 mr-2 text-neutral-mid flex-shrink-0 mt-0.5" />
-                      <div>
-                        <p className="font-medium">{property?.name || `Property #${request.propertyId}`}</p>
-                        <p className="text-sm text-neutral-mid">
-                          {property ? `${property.address}, ${property.city}` : "Loading property details..."}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <Calendar className="h-5 w-5 mr-2 text-neutral-mid" />
-                        <span className="text-sm text-neutral-mid">{formatDate(request.createdAt)}</span>
-                      </div>
-                      <div>
-                        {getPriorityBadge(request.priority)}
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center justify-between pt-2">
-                      <div className="flex items-center">
-                        {getStatusIcon(request.status)}
-                        <span className="ml-2 text-sm">
-                          {request.status === 'pending' ? 'Awaiting review' :
-                           request.status === 'in_progress' ? 'Work in progress' :
-                           'Completed'}
-                        </span>
+
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-neutral-mid">Pending</p>
+                  <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
+                </div>
+                <Clock className="h-8 w-8 text-yellow-600" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-neutral-mid">In Progress</p>
+                  <p className="text-2xl font-bold text-blue-600">{stats.inProgress}</p>
+                </div>
+                <Wrench className="h-8 w-8 text-blue-600" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-neutral-mid">Resolved</p>
+                  <p className="text-2xl font-bold text-green-600">{stats.resolved}</p>
+                </div>
+                <CheckCircle2 className="h-8 w-8 text-green-600" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-neutral-mid">High Priority</p>
+                  <p className="text-2xl font-bold text-red-600">{stats.high}</p>
+                </div>
+                <AlertTriangle className="h-8 w-8 text-red-600" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Filters */}
+        <div className="flex flex-wrap gap-4 mb-6">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="in_progress">In Progress</SelectItem>
+              <SelectItem value="resolved">Resolved</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Filter by priority" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Priorities</SelectItem>
+              <SelectItem value="high">High Priority</SelectItem>
+              <SelectItem value="medium">Medium Priority</SelectItem>
+              <SelectItem value="low">Low Priority</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {ownerProperties.length > 1 && (
+            <Select value={propertyFilter} onValueChange={setPropertyFilter}>
+              <SelectTrigger className="w-64">
+                <SelectValue placeholder="Filter by property" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Properties</SelectItem>
+                {ownerProperties.map((property: any) => (
+                  <SelectItem key={property.id} value={property.id.toString()}>
+                    {property.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
+
+        {/* Maintenance Requests List */}
+        {filteredRequests.length === 0 ? (
+          <Card>
+            <CardContent className="text-center py-12">
+              <Wrench className="h-12 w-12 mx-auto text-neutral-light mb-4" />
+              <h3 className="text-lg font-medium text-neutral-dark mb-2">No maintenance requests</h3>
+              <p className="text-neutral-mid mb-4">
+                {ownerFilteredRequests.length === 0 
+                  ? "No maintenance requests have been submitted for your properties yet."
+                  : "No requests match your current filters."
+                }
+              </p>
+              <Link href="/maintenance/add">
+                <Button>Create First Request</Button>
+              </Link>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-4">
+            {filteredRequests.map((request) => (
+              <Card key={request.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="font-medium text-neutral-dark">{request.title}</h3>
+                        <Badge className={getPriorityColor(request.priority)}>
+                          {request.priority.charAt(0).toUpperCase() + request.priority.slice(1)}
+                        </Badge>
+                        <Badge className={getStatusColor(request.status)}>
+                          <span className="flex items-center gap-1">
+                            {getStatusIcon(request.status)}
+                            {request.status.replace('_', ' ').charAt(0).toUpperCase() + request.status.replace('_', ' ').slice(1)}
+                          </span>
+                        </Badge>
                       </div>
                       
-                      <Button variant="outline" size="sm">
-                        View Details
-                      </Button>
+                      <div className="flex items-center gap-4 mb-3 text-sm text-neutral-mid">
+                        <div className="flex items-center">
+                          <Building className="h-4 w-4 mr-1" />
+                          {getPropertyName(request.propertyId)}
+                        </div>
+                        <div className="flex items-center">
+                          <User className="h-4 w-4 mr-1" />
+                          Tenant ID: {request.tenantId}
+                        </div>
+                      </div>
+                      
+                      <p className="text-neutral-mid mb-3">{request.description}</p>
+                      
+                      <div className="flex items-center text-sm text-neutral-mid">
+                        <Calendar className="h-4 w-4 mr-1" />
+                        Created {formatDate(request.createdAt)}
+                        {request.resolvedAt && (
+                          <>
+                            <span className="mx-2">•</span>
+                            Resolved {formatDate(request.resolvedAt)}
+                          </>
+                        )}
+                      </div>
                     </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="py-12 text-center">
-            <p className="text-neutral-mid">No maintenance requests found</p>
-            <Button className="mt-4 bg-primary hover:bg-primary-dark">Create Your First Request</Button>
+                    
+                    <div className="flex gap-2 ml-4">
+                      {request.status === 'pending' && (
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => updateStatusMutation.mutate({ id: request.id, status: 'in_progress' })}
+                          disabled={updateStatusMutation.isPending}
+                        >
+                          Start Work
+                        </Button>
+                      )}
+                      
+                      {request.status === 'in_progress' && (
+                        <Button 
+                          size="sm"
+                          onClick={() => updateStatusMutation.mutate({ id: request.id, status: 'resolved' })}
+                          disabled={updateStatusMutation.isPending}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          Mark Resolved
+                        </Button>
+                      )}
+
+                      {request.status === 'resolved' && (
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => updateStatusMutation.mutate({ id: request.id, status: 'in_progress' })}
+                          disabled={updateStatusMutation.isPending}
+                        >
+                          Reopen
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         )}
       </div>
