@@ -19,6 +19,14 @@ export interface IStorage {
   updateUser(id: number, userData: Partial<User>): Promise<User | undefined>;
   deleteUser(id: number): Promise<boolean>;
   
+  // Property Owner operations
+  getPropertyOwner(id: number): Promise<PropertyOwner | undefined>;
+  getPropertyOwnerByUserId(userId: number): Promise<PropertyOwner | undefined>;
+  getPropertyOwners(): Promise<PropertyOwner[]>;
+  createPropertyOwner(propertyOwner: InsertPropertyOwner): Promise<PropertyOwner>;
+  updatePropertyOwner(id: number, ownerData: Partial<PropertyOwner>): Promise<PropertyOwner | undefined>;
+  deletePropertyOwner(id: number): Promise<boolean>;
+  
   // Property operations
   getProperty(id: number): Promise<Property | undefined>;
   getProperties(): Promise<Property[]>;
