@@ -51,6 +51,14 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
   }, [isOpen, onClose]);
   
   const isActive = (path: string) => {
+    // For exact matches, only highlight when the path matches exactly
+    if (path === '/properties') {
+      return location === '/properties';
+    }
+    if (path === '/owner/properties') {
+      return location === '/owner/properties';
+    }
+    // For other paths, allow sub-routes
     return location === path || location.startsWith(`${path}/`);
   };
   
