@@ -1,92 +1,138 @@
-import { useQuery } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/use-simple-auth";
-import { isAdmin } from "@/types";
-import { useToast } from "@/hooks/use-toast";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Search, RefreshCw, User, Phone, Mail, Check, Calendar, FileText } from "lucide-react";
-import SEO from "@/components/seo";
-import { useState } from "react";
-import { formatDate } from "@/types";
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useLocation } from 'wouter';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-simple-auth';
+import { apiRequest } from '@/lib/queryClient';
+import { 
+  Plus, 
+  Search, 
+  Phone, 
+  Mail, 
+  MapPin, 
+  Calendar,
+  Euro,
+  Edit,
+  Trash2,
+  Eye,
+  User,
+  Building
+} from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import SEO from '@/components/seo';
+import { formatCurrency, formatDate, isAdmin, canManageProperties } from '@/lib/utils';
 
-interface Tenant {
+interface TenantWithUser {
   id: number;
   userId: number;
-  phone?: string;
-  emergencyContact?: string;
-  createdAt: string;
-  user?: {
-    firstName?: string;
-    lastName?: string;
-    email: string;
+  phone: string | null;
+  emergencyContact: string | null;
+  emergencyPhone: string | null;
+  dateOfBirth: Date | null;
+  occupation: string | null;
+  monthlyIncome: number | null;
+  employerName: string | null;
+  employerPhone: string | null;
+  previousAddress: string | null;
+  moveInDate: Date | null;
+  notes: string | null;
+  status: string;
+  createdAt: Date;
+  updatedAt: Date;
+  user: {
+    id: number;
     username: string;
+    email: string;
+    firstName: string | null;
+    lastName: string | null;
+    role: string;
+    status: string;
   };
 }
 
-export default function Tenants() {
-  const { toast } = useToast();
+export default function TenantsIndex() {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [, setLocation] = useLocation();
   const { user } = useAuth();
-  const [searchQuery, setSearchQuery] = useState("");
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  // Only admins can see the tenant list
-  const isUserAdmin = isAdmin(user);
+  // Fetch tenants based on user role
+  const { data: tenants = [], isLoading } = useQuery<TenantWithUser[]>({
+    queryKey: ['/api/tenants'],
+  });
 
-  const { data: tenants, isLoading, isError, refetch } = useQuery<Tenant[]>({
-    queryKey: ["/api/tenants"],
-    enabled: isUserAdmin,
-    onError: () => {
+  // Delete tenant mutation
+  const deleteTenantMutation = useMutation({
+    mutationFn: async (tenantId: number) => {
+      return await apiRequest(`/api/tenants/${tenantId}`, {
+        method: 'DELETE',
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/tenants'] });
       toast({
-        title: "Error",
-        description: "Failed to load tenants",
-        variant: "destructive",
+        title: 'Success',
+        description: 'Tenant deleted successfully!',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message || 'Failed to delete tenant',
       });
     },
   });
 
-  // Get user details for each tenant (in a real app, this would be part of the API response)
-  const { data: users } = useQuery({
-    queryKey: ["/api/users"],
-    enabled: isUserAdmin && !!tenants,
-  });
-
-  // Combine tenant data with user data
-  const tenantsWithUserDetails = tenants?.map(tenant => {
-    // Find matching user
-    const matchingUser = users?.find((u: any) => u.id === tenant.userId);
-    
-    return {
-      ...tenant,
-      user: matchingUser
-    };
-  });
-
-  // Filter tenants based on search query
-  const filteredTenants = tenantsWithUserDetails?.filter(tenant => {
-    if (!searchQuery) return true;
-    
-    const searchTerm = searchQuery.toLowerCase();
+  // Filter tenants based on search term
+  const filteredTenants = tenants.filter(tenant => {
+    const searchLower = searchTerm.toLowerCase();
+    const fullName = `${tenant.user.firstName || ''} ${tenant.user.lastName || ''}`.toLowerCase();
     return (
-      tenant.user?.firstName?.toLowerCase().includes(searchTerm) ||
-      tenant.user?.lastName?.toLowerCase().includes(searchTerm) ||
-      tenant.user?.email.toLowerCase().includes(searchTerm) ||
-      tenant.user?.username.toLowerCase().includes(searchTerm) ||
-      tenant.phone?.includes(searchTerm)
+      fullName.includes(searchLower) ||
+      tenant.user.email.toLowerCase().includes(searchLower) ||
+      tenant.user.username.toLowerCase().includes(searchLower) ||
+      (tenant.phone && tenant.phone.toLowerCase().includes(searchLower)) ||
+      (tenant.occupation && tenant.occupation.toLowerCase().includes(searchLower))
     );
   });
 
-  if (!isUserAdmin) {
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'active':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'inactive':
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const handleDeleteTenant = (tenantId: number) => {
+    deleteTenantMutation.mutate(tenantId);
+  };
+
+  if (isLoading) {
     return (
-      <div className="py-12 text-center">
-        <p className="text-neutral-mid">You don't have permission to view this page</p>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -94,146 +140,222 @@ export default function Tenants() {
   return (
     <>
       <SEO 
-        title="Tenants" 
-        description="Manage property tenants and their information" 
+        title="Tenant Management" 
+        description="Manage tenants, view profiles, and track rental information" 
       />
       
       <div className="py-6 px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-medium">Tenants</h1>
-            <p className="text-neutral-mid">Manage property tenants and their information</p>
-          </div>
-          
-          <div className="flex gap-2 mt-4 md:mt-0">
-            <Button className="bg-primary hover:bg-primary-dark flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              Add Tenant
-            </Button>
+        {/* Header */}
+        <div className="mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-medium">Tenant Management</h1>
+              <p className="text-neutral-mid">
+                {user?.role === 'property_owner' 
+                  ? 'Manage tenants in your properties' 
+                  : 'Manage all tenants in the system'
+                }
+              </p>
+            </div>
+            
+            {canManageProperties(user) && (
+              <Button 
+                onClick={() => setLocation('/tenants/add')}
+                className="bg-primary hover:bg-primary-dark"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Tenant
+              </Button>
+            )}
           </div>
         </div>
-        
+
+        {/* Search and Filters */}
         <Card className="mb-6">
-          <CardHeader className="px-6 py-4 flex flex-col md:flex-row md:items-center md:justify-between space-y-2 md:space-y-0">
-            <CardTitle className="text-xl">Tenant Directory</CardTitle>
-            <div className="flex flex-col md:flex-row gap-2 md:items-center">
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-neutral-mid" />
+          <CardContent className="p-4">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
-                  placeholder="Search tenants..."
-                  className="pl-8 w-full md:w-auto"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search tenants by name, email, phone, or occupation..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
                 />
               </div>
-              <Button 
-                variant="secondary"
-                size="icon"
-                onClick={() => refetch()}
-                className="md:ml-2"
-                title="Refresh"
-              >
-                <RefreshCw className="h-4 w-4" />
-              </Button>
             </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            {isLoading ? (
-              <div className="py-8 text-center">
-                <p className="text-neutral-mid">Loading tenants...</p>
-              </div>
-            ) : isError ? (
-              <div className="py-8 text-center">
-                <p className="text-destructive">Error loading tenants. Please try again.</p>
-                <Button variant="outline" onClick={() => refetch()} className="mt-2">
-                  Retry
-                </Button>
-              </div>
-            ) : filteredTenants && filteredTenants.length > 0 ? (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Tenant</TableHead>
-                      <TableHead>Contact</TableHead>
-                      <TableHead>Emergency Contact</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Joined</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredTenants.map(tenant => (
-                      <TableRow key={tenant.id}>
-                        <TableCell>
-                          <div className="flex items-center">
-                            <div className="h-9 w-9 rounded-full bg-primary-light text-white flex items-center justify-center mr-3">
-                              <User className="h-5 w-5" />
-                            </div>
-                            <div>
-                              <p className="font-medium">
-                                {tenant.user?.firstName} {tenant.user?.lastName || ""}
-                              </p>
-                              <p className="text-xs text-neutral-mid">
-                                {tenant.user?.username || `User ID: ${tenant.userId}`}
-                              </p>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            <p className="flex items-center text-sm">
-                              <Mail className="h-4 w-4 mr-2 text-neutral-mid" />
-                              {tenant.user?.email || "No email"}
-                            </p>
-                            <p className="flex items-center text-sm">
-                              <Phone className="h-4 w-4 mr-2 text-neutral-mid" />
-                              {tenant.phone || "No phone"}
-                            </p>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <p className="text-sm">
-                            {tenant.emergencyContact || "Not provided"}
-                          </p>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center">
-                            <div className="w-2 h-2 rounded-full bg-success mr-2"></div>
-                            <span>Active</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <p className="text-sm">
-                            {formatDate(tenant.createdAt)}
-                          </p>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex space-x-2">
-                            <Button variant="outline" size="sm" className="flex items-center">
-                              <FileText className="h-4 w-4 mr-1" />
-                              Leases
-                            </Button>
-                            <Button variant="outline" size="sm" className="flex items-center">
-                              <Check className="h-4 w-4 mr-1" />
-                              Details
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            ) : (
-              <div className="py-8 text-center">
-                <p className="text-neutral-mid">
-                  {searchQuery ? "No tenants match your search" : "No tenants found"}
-                </p>
-              </div>
-            )}
           </CardContent>
         </Card>
+
+        {/* Tenants Grid */}
+        {filteredTenants.length === 0 ? (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <User className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No tenants found</h3>
+              <p className="text-gray-500 mb-4">
+                {searchTerm 
+                  ? 'No tenants match your search criteria.' 
+                  : 'Get started by adding your first tenant.'
+                }
+              </p>
+              {canManageProperties(user) && !searchTerm && (
+                <Button 
+                  onClick={() => setLocation('/tenants/add')}
+                  className="bg-primary hover:bg-primary-dark"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Tenant
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredTenants.map((tenant) => (
+              <Card key={tenant.id} className="hover:shadow-md transition-shadow">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                        <User className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-lg">
+                          {tenant.user.firstName && tenant.user.lastName
+                            ? `${tenant.user.firstName} ${tenant.user.lastName}`
+                            : tenant.user.username
+                          }
+                        </CardTitle>
+                        <p className="text-sm text-neutral-mid">@{tenant.user.username}</p>
+                      </div>
+                    </div>
+                    <Badge className={getStatusColor(tenant.status)}>
+                      {tenant.status}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                
+                <CardContent className="space-y-3">
+                  {/* Contact Information */}
+                  <div className="space-y-2">
+                    <div className="flex items-center text-sm text-neutral-mid">
+                      <Mail className="h-4 w-4 mr-2" />
+                      {tenant.user.email}
+                    </div>
+                    {tenant.phone && (
+                      <div className="flex items-center text-sm text-neutral-mid">
+                        <Phone className="h-4 w-4 mr-2" />
+                        {tenant.phone}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Additional Information */}
+                  {tenant.occupation && (
+                    <div className="flex items-center text-sm text-neutral-mid">
+                      <Building className="h-4 w-4 mr-2" />
+                      {tenant.occupation}
+                    </div>
+                  )}
+
+                  {tenant.monthlyIncome && (
+                    <div className="flex items-center text-sm text-neutral-mid">
+                      <Euro className="h-4 w-4 mr-2" />
+                      Monthly Income: {formatCurrency(tenant.monthlyIncome)}
+                    </div>
+                  )}
+
+                  {tenant.moveInDate && (
+                    <div className="flex items-center text-sm text-neutral-mid">
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Move-in: {formatDate(tenant.moveInDate.toString())}
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-2 pt-3 border-t">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setLocation(`/tenants/${tenant.id}`)}
+                      className="flex-1"
+                    >
+                      <Eye className="h-4 w-4 mr-1" />
+                      View
+                    </Button>
+                    
+                    {canManageProperties(user) && (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setLocation(`/tenants/${tenant.id}/edit`)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Tenant</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete this tenant? This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDeleteTenant(tenant.id)}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {/* Summary Stats */}
+        {filteredTenants.length > 0 && (
+          <Card className="mt-6">
+            <CardContent className="p-4">
+              <div className="flex flex-wrap gap-6 text-sm text-neutral-mid">
+                <div>
+                  <span className="font-medium text-neutral-dark">Total Tenants:</span> {filteredTenants.length}
+                </div>
+                <div>
+                  <span className="font-medium text-neutral-dark">Active:</span>{' '}
+                  {filteredTenants.filter(t => t.status === 'active').length}
+                </div>
+                <div>
+                  <span className="font-medium text-neutral-dark">Pending:</span>{' '}
+                  {filteredTenants.filter(t => t.status === 'pending').length}
+                </div>
+                <div>
+                  <span className="font-medium text-neutral-dark">Inactive:</span>{' '}
+                  {filteredTenants.filter(t => t.status === 'inactive').length}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </>
   );

@@ -642,10 +642,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Tenant Routes
-  app.get("/api/tenants", authMiddleware, adminMiddleware, async (req, res) => {
+  app.get("/api/tenants", authMiddleware, async (req, res) => {
     try {
-      const tenants = await storage.getTenants();
-      res.json(tenants);
+      const user = req.user;
+      
+      if (user.role === "admin") {
+        // Admins can see all tenants with user details
+        const tenants = await storage.getTenantsWithUsers();
+        res.json(tenants);
+      } else if (user.role === "property_owner") {
+        // Property owners can see tenants in their properties with user details
+        const tenants = await storage.getTenantsWithUsersForOwner(user.id);
+        res.json(tenants);
+      } else {
+        return res.status(403).json({ message: "Access denied" });
+      }
     } catch (error) {
       res.status(500).json({ message: "Error fetching tenants" });
     }
@@ -654,16 +665,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/tenants/:id", authMiddleware, async (req, res) => {
     try {
       const tenantId = parseInt(req.params.id);
-      const tenant = await storage.getTenant(tenantId);
+      const user = req.user;
+      const tenant = await storage.getTenantWithUser(tenantId);
       
       if (!tenant) {
         return res.status(404).json({ message: "Tenant not found" });
       }
       
-      // If not admin, ensure they can only view their own tenant profile
-      if (req.user.role !== "admin") {
-        const userTenant = await storage.getTenantByUserId(req.user.id);
-        
+      // Access control: admins, property owners (for their tenants), or the tenant themselves
+      if (user.role === "admin") {
+        // Admins can view any tenant
+      } else if (user.role === "property_owner") {
+        // Property owners can view tenants in their properties
+        const ownerTenants = await storage.getTenantsForOwner(user.id);
+        const canAccess = ownerTenants.some(t => t.id === tenantId);
+        if (!canAccess) {
+          return res.status(403).json({ message: "Access denied" });
+        }
+      } else {
+        // Regular users can only view their own tenant profile
+        const userTenant = await storage.getTenantByUserId(user.id);
         if (!userTenant || userTenant.id !== tenantId) {
           return res.status(403).json({ message: "Access denied" });
         }

@@ -4,7 +4,8 @@ import {
   tenants, Tenant, InsertTenant,
   leases, Lease, InsertLease,
   maintenanceRequests, MaintenanceRequest, InsertMaintenanceRequest,
-  leaseApplications, LeaseApplication, InsertLeaseApplication
+  leaseApplications, LeaseApplication, InsertLeaseApplication,
+  rentPayments, RentPayment, InsertRentPayment
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, sql } from "drizzle-orm";
@@ -64,6 +65,22 @@ export interface IStorage {
   createLeaseApplication(application: InsertLeaseApplication): Promise<LeaseApplication>;
   updateLeaseApplication(id: number, applicationData: Partial<LeaseApplication>): Promise<LeaseApplication | undefined>;
   deleteLeaseApplication(id: number): Promise<boolean>;
+
+  // Rent Payment operations
+  getRentPayment(id: number): Promise<RentPayment | undefined>;
+  getRentPayments(): Promise<RentPayment[]>;
+  getRentPaymentsForLease(leaseId: number): Promise<RentPayment[]>;
+  getRentPaymentsForTenant(tenantId: number): Promise<RentPayment[]>;
+  getRentPaymentsForOwner(ownerId: number): Promise<RentPayment[]>;
+  createRentPayment(payment: InsertRentPayment): Promise<RentPayment>;
+  updateRentPayment(id: number, paymentData: Partial<RentPayment>): Promise<RentPayment | undefined>;
+  deleteRentPayment(id: number): Promise<boolean>;
+
+  // Enhanced tenant operations
+  getTenantsForOwner(ownerId: number): Promise<Tenant[]>;
+  getTenantWithUser(tenantId: number): Promise<(Tenant & { user: User }) | undefined>;
+  getTenantsWithUsers(): Promise<(Tenant & { user: User })[]>;
+  getTenantsWithUsersForOwner(ownerId: number): Promise<(Tenant & { user: User })[]>;
 
   // Dashboard queries
   getPropertyCount(): Promise<number>;
