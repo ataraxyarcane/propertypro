@@ -78,12 +78,47 @@ export const tenants = pgTable("tenants", {
   userId: integer("user_id").notNull(),
   phone: text("phone"),
   emergencyContact: text("emergency_contact"),
+  emergencyPhone: text("emergency_phone"),
+  dateOfBirth: timestamp("date_of_birth"),
+  occupation: text("occupation"),
+  monthlyIncome: doublePrecision("monthly_income"),
+  employerName: text("employer_name"),
+  employerPhone: text("employer_phone"),
+  previousAddress: text("previous_address"),
+  moveInDate: timestamp("move_in_date"),
+  notes: text("notes"),
+  status: text("status").notNull().default("active"), // 'active', 'inactive', 'pending'
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export const insertTenantSchema = createInsertSchema(tenants).omit({
   id: true,
   createdAt: true,
+  updatedAt: true,
+});
+
+// Rent Payments
+export const rentPayments = pgTable("rent_payments", {
+  id: serial("id").primaryKey(),
+  leaseId: integer("lease_id").notNull(),
+  tenantId: integer("tenant_id").notNull(),
+  amount: doublePrecision("amount").notNull(),
+  dueDate: timestamp("due_date").notNull(),
+  paidDate: timestamp("paid_date"),
+  paymentMethod: text("payment_method"), // 'stripe', 'bank_transfer', 'cash', 'check'
+  stripePaymentIntentId: text("stripe_payment_intent_id"),
+  status: text("status").notNull().default("pending"), // 'pending', 'paid', 'late', 'failed'
+  lateFee: doublePrecision("late_fee").default(0),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertRentPaymentSchema = createInsertSchema(rentPayments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
 // Leases
@@ -188,3 +223,5 @@ export type MaintenanceRequest = typeof maintenanceRequests.$inferSelect;
 export type InsertMaintenanceRequest = z.infer<typeof insertMaintenanceRequestSchema>;
 export type LeaseApplication = typeof leaseApplications.$inferSelect;
 export type InsertLeaseApplication = z.infer<typeof insertLeaseApplicationSchema>;
+export type RentPayment = typeof rentPayments.$inferSelect;
+export type InsertRentPayment = z.infer<typeof insertRentPaymentSchema>;
