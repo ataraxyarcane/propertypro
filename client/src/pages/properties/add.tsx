@@ -152,6 +152,10 @@ export default function AddProperty() {
         <Card>
           <CardHeader>
             <CardTitle>Property Details</CardTitle>
+            <p className="text-sm text-neutral-mid mt-2">
+              Fields marked with <span className="text-red-600">*</span> are required. 
+              Only Eircode and square meters are optional.
+            </p>
           </CardHeader>
           <CardContent>
             <Form {...form}>
@@ -412,7 +416,7 @@ export default function AddProperty() {
 
                 {/* Images */}
                 <div>
-                  <FormLabel>Property Images (URLs)</FormLabel>
+                  <FormLabel>Property Images (URLs) (optional)</FormLabel>
                   <div className="mt-2 space-y-2">
                     <div className="flex gap-2">
                       <Input
