@@ -51,7 +51,7 @@ function Router() {
       {/* Property routes */}
       <Route path="/properties" component={Properties} />
       <Route path="/properties/add" component={AddProperty} />
-      <Route path="/properties/edit/:id" component={EditProperty} />
+      <Route path="/properties/:id/edit" component={EditProperty} />
       <Route path="/properties/:id/apply" component={ApplyForProperty} />
       <Route path="/properties/:id" component={PropertyDetails} />
       

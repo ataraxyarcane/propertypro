@@ -35,12 +35,12 @@ const propertySchema = z.object({
   address: z.string().min(1, 'Address is required'),
   city: z.string().min(1, 'City is required'),
   state: z.string().min(1, 'County is required'),
-  zipCode: z.string().min(1, 'Eircode is required'),
+  zipCode: z.string().optional(),
   description: z.string().optional(),
   propertyType: z.enum(['apartment', 'house', 'condo', 'townhouse']),
   price: z.number().min(1, 'Monthly rent must be greater than 0'),
-  bedrooms: z.number().min(0).optional(),
-  bathrooms: z.number().min(0).optional(),
+  bedrooms: z.number().min(0),
+  bathrooms: z.number().min(0),
   squareMeters: z.number().min(1).optional(),
   status: z.enum(['available', 'leased', 'maintenance']),
 });
@@ -203,6 +203,10 @@ export default function EditProperty() {
         <Card>
           <CardHeader>
             <CardTitle>Property Details</CardTitle>
+            <p className="text-sm text-neutral-mid mt-2">
+              Fields marked with <span className="text-red-600">*</span> are required. 
+              Only Eircode and square meters are optional.
+            </p>
           </CardHeader>
           <CardContent>
             <Form {...form}>
@@ -214,7 +218,7 @@ export default function EditProperty() {
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Property Name</FormLabel>
+                        <FormLabel>Property Name <span className="text-red-600">*</span></FormLabel>
                         <FormControl>
                           <Input placeholder="e.g. Modern Dublin Apartment" {...field} />
                         </FormControl>
@@ -228,7 +232,7 @@ export default function EditProperty() {
                     name="propertyType"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Property Type</FormLabel>
+                        <FormLabel>Property Type <span className="text-red-600">*</span></FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
@@ -254,7 +258,7 @@ export default function EditProperty() {
                   name="address"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Street Address</FormLabel>
+                      <FormLabel>Street Address <span className="text-red-600">*</span></FormLabel>
                       <FormControl>
                         <Input placeholder="e.g. 15 Grafton Street" {...field} />
                       </FormControl>
@@ -269,7 +273,7 @@ export default function EditProperty() {
                     name="city"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>City/Area</FormLabel>
+                        <FormLabel>City/Area <span className="text-red-600">*</span></FormLabel>
                         <FormControl>
                           <Input placeholder="e.g. Dublin 2" {...field} />
                         </FormControl>
@@ -283,7 +287,7 @@ export default function EditProperty() {
                     name="state"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>County</FormLabel>
+                        <FormLabel>County <span className="text-red-600">*</span></FormLabel>
                         <FormControl>
                           <Input placeholder="e.g. Dublin" {...field} />
                         </FormControl>
