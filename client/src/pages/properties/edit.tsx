@@ -118,7 +118,7 @@ export default function EditProperty() {
         title: 'Success',
         description: 'Property updated successfully!',
       });
-      setLocation('/properties');
+      setLocation('/owner/properties');
     },
     onError: (error: any) => {
       toast({
@@ -301,7 +301,7 @@ export default function EditProperty() {
                     name="zipCode"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Eircode</FormLabel>
+                        <FormLabel>Eircode <span className="text-gray-500">(optional)</span></FormLabel>
                         <FormControl>
                           <Input placeholder="e.g. D02 VN88" {...field} />
                         </FormControl>
@@ -318,7 +318,7 @@ export default function EditProperty() {
                     name="price"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Monthly Rent (€)</FormLabel>
+                        <FormLabel>Monthly Rent (€) <span className="text-red-600">*</span></FormLabel>
                         <FormControl>
                           <Input 
                             type="number" 
@@ -337,7 +337,7 @@ export default function EditProperty() {
                     name="bedrooms"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Bedrooms</FormLabel>
+                        <FormLabel>Bedrooms <span className="text-red-600">*</span></FormLabel>
                         <FormControl>
                           <Input 
                             type="number" 
@@ -356,7 +356,7 @@ export default function EditProperty() {
                     name="bathrooms"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Bathrooms</FormLabel>
+                        <FormLabel>Bathrooms <span className="text-red-600">*</span></FormLabel>
                         <FormControl>
                           <Input 
                             type="number" 
@@ -376,7 +376,7 @@ export default function EditProperty() {
                     name="squareMeters"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Square Meters</FormLabel>
+                        <FormLabel>Square Meters <span className="text-gray-500">(optional)</span></FormLabel>
                         <FormControl>
                           <Input 
                             type="number" 
