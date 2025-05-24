@@ -438,13 +438,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/properties/:id", authMiddleware, adminMiddleware, async (req, res) => {
+  app.put("/api/properties/:id", authMiddleware, async (req, res) => {
     try {
       const propertyId = parseInt(req.params.id);
+      const user = req.user;
       const property = await storage.getProperty(propertyId);
       
       if (!property) {
         return res.status(404).json({ message: "Property not found" });
+      }
+      
+      // Only allow admins or the property owner to edit the property
+      if (user.role !== 'admin' && property.ownerId !== user.id) {
+        return res.status(403).json({ message: "Access denied: You can only edit properties you own" });
       }
       
       const updatedProperty = await storage.updateProperty(propertyId, req.body);
