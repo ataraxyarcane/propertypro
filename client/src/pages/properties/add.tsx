@@ -34,12 +34,12 @@ const propertySchema = z.object({
   address: z.string().min(1, 'Address is required'),
   city: z.string().min(1, 'City is required'),
   state: z.string().min(1, 'County is required'),
-  zipCode: z.string().min(1, 'Eircode is required'),
+  zipCode: z.string().optional(),
   description: z.string().optional(),
   propertyType: z.enum(['apartment', 'house', 'condo', 'townhouse']),
   price: z.number().min(1, 'Monthly rent must be greater than 0'),
-  bedrooms: z.number().min(0).optional(),
-  bathrooms: z.number().min(0).optional(),
+  bedrooms: z.number().min(0),
+  bathrooms: z.number().min(0),
   squareMeters: z.number().min(1).optional(),
   status: z.enum(['available', 'leased', 'maintenance']).default('available'),
 });
@@ -163,7 +163,7 @@ export default function AddProperty() {
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Property Name</FormLabel>
+                        <FormLabel>Property Name *</FormLabel>
                         <FormControl>
                           <Input placeholder="e.g. Modern Dublin Apartment" {...field} />
                         </FormControl>
@@ -177,7 +177,7 @@ export default function AddProperty() {
                     name="propertyType"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Property Type</FormLabel>
+                        <FormLabel>Property Type *</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
@@ -203,7 +203,7 @@ export default function AddProperty() {
                   name="address"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Street Address</FormLabel>
+                      <FormLabel>Street Address *</FormLabel>
                       <FormControl>
                         <Input placeholder="e.g. 15 Grafton Street" {...field} />
                       </FormControl>
@@ -218,7 +218,7 @@ export default function AddProperty() {
                     name="city"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>City/Area</FormLabel>
+                        <FormLabel>City/Area *</FormLabel>
                         <FormControl>
                           <Input placeholder="e.g. Dublin 2" {...field} />
                         </FormControl>
@@ -232,7 +232,7 @@ export default function AddProperty() {
                     name="state"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>County</FormLabel>
+                        <FormLabel>County *</FormLabel>
                         <FormControl>
                           <Input placeholder="e.g. Dublin" {...field} />
                         </FormControl>
@@ -246,7 +246,7 @@ export default function AddProperty() {
                     name="zipCode"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Eircode</FormLabel>
+                        <FormLabel>Eircode (optional)</FormLabel>
                         <FormControl>
                           <Input placeholder="e.g. D02 VN88" {...field} />
                         </FormControl>
@@ -263,7 +263,7 @@ export default function AddProperty() {
                     name="price"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Monthly Rent (€)</FormLabel>
+                        <FormLabel>Monthly Rent (€) *</FormLabel>
                         <FormControl>
                           <Input 
                             type="number" 
@@ -282,7 +282,7 @@ export default function AddProperty() {
                     name="bedrooms"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Bedrooms</FormLabel>
+                        <FormLabel>Bedrooms *</FormLabel>
                         <FormControl>
                           <Input 
                             type="number" 
@@ -301,7 +301,7 @@ export default function AddProperty() {
                     name="bathrooms"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Bathrooms</FormLabel>
+                        <FormLabel>Bathrooms *</FormLabel>
                         <FormControl>
                           <Input 
                             type="number" 
@@ -321,7 +321,7 @@ export default function AddProperty() {
                     name="squareMeters"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Square Meters</FormLabel>
+                        <FormLabel>Square Meters (optional)</FormLabel>
                         <FormControl>
                           <Input 
                             type="number" 
@@ -342,7 +342,7 @@ export default function AddProperty() {
                   name="status"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Status</FormLabel>
+                      <FormLabel>Status *</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger className="w-48">
@@ -366,7 +366,7 @@ export default function AddProperty() {
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description</FormLabel>
+                      <FormLabel>Description (optional)</FormLabel>
                       <FormControl>
                         <Textarea 
                           placeholder="Describe the property, its features, and what makes it special..."
@@ -381,7 +381,7 @@ export default function AddProperty() {
 
                 {/* Features */}
                 <div>
-                  <FormLabel>Features & Amenities</FormLabel>
+                  <FormLabel>Features & Amenities (optional)</FormLabel>
                   <div className="mt-2 space-y-2">
                     <div className="flex gap-2">
                       <Input
