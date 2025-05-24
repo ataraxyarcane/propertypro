@@ -162,12 +162,12 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
                 </Button>
               </Link>
               
-              <Link href="/properties">
+              <Link href="/owner/properties">
                 <Button
                   variant="ghost"
                   className={cn(
                     "w-full justify-start",
-                    isActive("/properties") && "bg-primary/10 text-primary border-l-4 border-primary"
+                    isActive("/owner/properties") && "bg-primary/10 text-primary border-l-4 border-primary"
                   )}
                 >
                   <Building className="mr-2 h-4 w-4" />
