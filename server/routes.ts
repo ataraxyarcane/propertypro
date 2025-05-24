@@ -411,9 +411,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/properties", authMiddleware, adminMiddleware, async (req, res) => {
+  app.post("/api/properties", authMiddleware, async (req, res) => {
     try {
+      const user = req.user;
+      
+      // Only allow property owners and admins to create properties
+      if (user.role !== 'property_owner' && user.role !== 'admin') {
+        return res.status(403).json({ message: "Access denied: Property owner or admin privileges required" });
+      }
+      
       const propertyData = insertPropertySchema.parse(req.body);
+      
+      // Set the owner ID to the current user (unless admin is creating for someone else)
+      if (user.role === 'property_owner') {
+        propertyData.ownerId = user.id;
+      }
+      
       const newProperty = await storage.createProperty(propertyData);
       res.status(201).json(newProperty);
     } catch (error) {
