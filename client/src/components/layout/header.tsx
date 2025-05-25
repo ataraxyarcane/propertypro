@@ -61,19 +61,6 @@ export default function Header({ onMenuClick, user }: HeaderProps) {
         </div>
         
         <div className="flex items-center space-x-2">
-          {/* Property Owner Quick Actions */}
-          {isPropertyOwner(user) && (
-            <Link href="/properties/add">
-              <Button 
-                size="sm" 
-                className="bg-primary hover:bg-primary-dark text-white"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Property
-              </Button>
-            </Link>
-          )}
-          
           <div className="relative">
             <Button
               variant="ghost"
