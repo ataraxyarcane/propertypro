@@ -50,6 +50,7 @@ export default function ApplyForProperty() {
     previousAddress: "",
     reasonForMoving: "",
     additionalNotes: "",
+    message: "",
     hasBackground: false,
     agreedToTerms: false
   });
@@ -70,7 +71,9 @@ export default function ApplyForProperty() {
     mutationFn: async (data: any) => {
       const response = await apiRequest("POST", "/api/lease-applications", data);
       if (!response.ok) {
-        throw new Error("Failed to submit application");
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.message || errorData.error || `Server error: ${response.status}`;
+        throw new Error(errorMessage);
       }
       return response.json();
     },
@@ -82,10 +85,10 @@ export default function ApplyForProperty() {
       queryClient.invalidateQueries({ queryKey: ["/api/lease-applications"] });
       setLocation("/applications");
     },
-    onError: () => {
+    onError: (error: Error) => {
       toast({
         title: "Submission Failed",
-        description: "There was an error submitting your application. Please try again.",
+        description: error.message || "There was an error submitting your application. Please try again.",
         variant: "destructive",
       });
     },
@@ -114,10 +117,11 @@ export default function ApplyForProperty() {
       return;
     }
 
-    if (!formData.monthlyIncome || parseFloat(formData.monthlyIncome) <= 0) {
+    // Monthly income is now optional - only validate if provided
+    if (formData.monthlyIncome && parseFloat(formData.monthlyIncome) <= 0) {
       toast({
         title: "Invalid Income",
-        description: "Please enter a valid monthly income.",
+        description: "Please enter a valid monthly income or leave it blank.",
         variant: "destructive",
       });
       return;
@@ -135,7 +139,7 @@ export default function ApplyForProperty() {
     const applicationData = {
       propertyId: parseInt(propertyId),
       ...formData,
-      monthlyIncome: parseFloat(formData.monthlyIncome),
+      monthlyIncome: formData.monthlyIncome ? parseFloat(formData.monthlyIncome) : null,
       // For now, we'll simulate document upload with file names
       documents: Object.entries(documents)
         .filter(([_, file]) => file !== null)
@@ -268,6 +272,16 @@ export default function ApplyForProperty() {
                 />
               </div>
             </div>
+            <div>
+              <Label htmlFor="message">Message</Label>
+              <Textarea
+                id="message"
+                placeholder="Tell us about yourself, why you're interested in this property, or any other information you'd like to share..."
+                value={formData.message}
+                onChange={(e) => handleInputChange("message", e.target.value)}
+                rows={3}
+              />
+            </div>
           </CardContent>
         </Card>
 
@@ -282,13 +296,13 @@ export default function ApplyForProperty() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="monthlyIncome">Monthly Income (€) *</Label>
+                <Label htmlFor="monthlyIncome">Monthly Income (€)</Label>
                 <Input
                   id="monthlyIncome"
                   type="number"
+                  placeholder="Optional - enter your monthly income"
                   value={formData.monthlyIncome}
                   onChange={(e) => handleInputChange("monthlyIncome", e.target.value)}
-                  required
                 />
               </div>
               <div>
