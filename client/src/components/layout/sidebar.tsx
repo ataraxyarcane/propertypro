@@ -157,31 +157,30 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
                 </Button>
               </Link>
               
-              <Link href="/properties/add">
-                <Button
-                  variant="ghost"
-                  className={cn(
-                    "w-full justify-start",
-                    isActive("/properties/add") && "bg-primary/10 text-primary border-l-4 border-primary"
-                  )}
-                >
-                  <Building className="mr-2 h-4 w-4" />
-                  Add Property
-                </Button>
-              </Link>
-              
-              <Link href="/owner/properties">
-                <Button
-                  variant="ghost"
-                  className={cn(
-                    "w-full justify-start",
-                    isActive("/owner/properties") && "bg-primary/10 text-primary border-l-4 border-primary"
-                  )}
-                >
-                  <Building className="mr-2 h-4 w-4" />
-                  My Properties
-                </Button>
-              </Link>
+              <div className="flex items-center w-full">
+                <Link href="/owner/properties" className="flex-1">
+                  <Button
+                    variant="ghost"
+                    className={cn(
+                      "w-full justify-start",
+                      isActive("/owner/properties") && "bg-primary/10 text-primary border-l-4 border-primary"
+                    )}
+                  >
+                    <Building className="mr-2 h-4 w-4" />
+                    My Properties
+                  </Button>
+                </Link>
+                <Link href="/properties/add" className="ml-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-primary hover:bg-primary/10"
+                    title="Add Property"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
             </>
           )}
           
