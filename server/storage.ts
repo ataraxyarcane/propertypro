@@ -200,6 +200,187 @@ export class MemStorage implements IStorage {
       ],
       status: "available"
     });
+
+    // Additional Irish Properties
+    this.createProperty({
+      name: "Georgian Townhouse",
+      address: "15 Fitzwilliam Square",
+      city: "Dublin",
+      state: "Dublin",
+      zipCode: "D02 XY89",
+      description: "Elegant Georgian townhouse in prestigious Fitzwilliam Square. Features original period details, high ceilings, and beautiful garden views. Walking distance to St. Stephen's Green and city center.",
+      propertyType: "house",
+      price: 3200,
+      bedrooms: 4,
+      bathrooms: 3,
+      squareMeters: 180,
+      features: ["Garden", "Period Features", "Central Heating", "Original Fireplaces", "Parking"],
+      images: [
+        "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=450"
+      ],
+      status: "available",
+      ownerId: 1
+    });
+
+    this.createProperty({
+      name: "Riverside Apartment",
+      address: "42 Grand Canal Dock",
+      city: "Dublin",
+      state: "Dublin",
+      zipCode: "D04 F2K8",
+      description: "Contemporary 2-bedroom apartment with stunning canal views. Modern kitchen, en-suite bathroom, and access to gym and concierge services. Perfect for professionals.",
+      propertyType: "apartment",
+      price: 2400,
+      bedrooms: 2,
+      bathrooms: 2,
+      squareMeters: 85,
+      features: ["Balcony", "Gym", "Concierge", "Parking", "Storage"],
+      images: [
+        "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=450"
+      ],
+      status: "available",
+      ownerId: 1
+    });
+
+    this.createProperty({
+      name: "Galway Bay Cottage",
+      address: "8 Salthill Promenade",
+      city: "Galway",
+      state: "Galway",
+      zipCode: "H91 XK23",
+      description: "Charming 3-bedroom cottage overlooking Galway Bay. Recently renovated with modern amenities while maintaining traditional Irish character. Steps from the beach and Salthill promenade.",
+      propertyType: "house",
+      price: 1800,
+      bedrooms: 3,
+      bathrooms: 2,
+      squareMeters: 120,
+      features: ["Sea View", "Garden", "Fireplace", "Modern Kitchen", "Parking"],
+      images: [
+        "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=450"
+      ],
+      status: "available",
+      ownerId: 1
+    });
+
+    this.createProperty({
+      name: "Cork City Penthouse",
+      address: "25 Patrick Street",
+      city: "Cork",
+      state: "Cork",
+      zipCode: "T12 V8W9",
+      description: "Luxury penthouse in the heart of Cork city center. Floor-to-ceiling windows, private terrace, and premium finishes throughout. Walking distance to all amenities and transport links.",
+      propertyType: "apartment",
+      price: 2800,
+      bedrooms: 3,
+      bathrooms: 2,
+      squareMeters: 140,
+      features: ["Terrace", "City Views", "Lift", "Underfloor Heating", "Premium Finishes"],
+      images: [
+        "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=450"
+      ],
+      status: "available",
+      ownerId: 1
+    });
+
+    this.createProperty({
+      name: "Killarney Family Home",
+      address: "12 Ring of Kerry Road",
+      city: "Killarney",
+      state: "Kerry",
+      zipCode: "V93 P2R5",
+      description: "Spacious 4-bedroom family home with stunning mountain views. Large garden, modern kitchen, and close to Killarney National Park. Perfect for families seeking tranquility.",
+      propertyType: "house",
+      price: 2200,
+      bedrooms: 4,
+      bathrooms: 3,
+      squareMeters: 165,
+      features: ["Mountain Views", "Large Garden", "Garage", "Modern Kitchen", "Near National Park"],
+      images: [
+        "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=450"
+      ],
+      status: "available",
+      ownerId: 1
+    });
+
+    this.createProperty({
+      name: "Limerick Student Apartment",
+      address: "67 O'Connell Street",
+      city: "Limerick",
+      state: "Limerick",
+      zipCode: "V94 F2X8",
+      description: "Modern 1-bedroom apartment perfect for students or young professionals. Close to University of Limerick and city center. Fully furnished with all modern amenities.",
+      propertyType: "apartment",
+      price: 1200,
+      bedrooms: 1,
+      bathrooms: 1,
+      squareMeters: 45,
+      features: ["Furnished", "Near University", "Modern Appliances", "Internet Included", "Laundry"],
+      images: [
+        "https://images.unsplash.com/photo-1555636222-cae831e670b3?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=450"
+      ],
+      status: "available",
+      ownerId: 1
+    });
+
+    this.createProperty({
+      name: "Waterford Historic Apartment",
+      address: "18 The Mall",
+      city: "Waterford",
+      state: "Waterford",
+      zipCode: "X91 P9K7",
+      description: "Beautiful 2-bedroom apartment in historic building overlooking the River Suir. Exposed brick walls, high ceilings, and modern renovations. Rich in history and character.",
+      propertyType: "apartment",
+      price: 1600,
+      bedrooms: 2,
+      bathrooms: 1,
+      squareMeters: 75,
+      features: ["River Views", "Historic Building", "Exposed Brick", "High Ceilings", "Central Location"],
+      images: [
+        "https://images.unsplash.com/photo-1502672023488-70e25813eb80?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=450"
+      ],
+      status: "available",
+      ownerId: 1
+    });
+
+    this.createProperty({
+      name: "Dingle Peninsula Retreat",
+      address: "5 Slea Head Drive",
+      city: "Dingle",
+      state: "Kerry",
+      zipCode: "V92 H3K6",
+      description: "Secluded 3-bedroom house on the famous Dingle Peninsula. Breathtaking ocean views, traditional stone construction, and perfect for nature lovers. Close to hiking trails and beaches.",
+      propertyType: "house",
+      price: 2000,
+      bedrooms: 3,
+      bathrooms: 2,
+      squareMeters: 110,
+      features: ["Ocean Views", "Stone Construction", "Garden", "Hiking Trails", "Secluded Location"],
+      images: [
+        "https://images.unsplash.com/photo-1505142468610-359e7d316be0?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=450"
+      ],
+      status: "available",
+      ownerId: 1
+    });
+
+    this.createProperty({
+      name: "Dublin Docklands Studio",
+      address: "33 IFSC Plaza",
+      city: "Dublin",
+      state: "Dublin",
+      zipCode: "D01 K8E7",
+      description: "Ultra-modern studio apartment in the heart of Dublin's financial district. Floor-to-ceiling windows, premium finishes, and access to building amenities. Perfect for professionals.",
+      propertyType: "apartment",
+      price: 1800,
+      bedrooms: 1,
+      bathrooms: 1,
+      squareMeters: 50,
+      features: ["Modern Design", "City Views", "Gym Access", "24/7 Security", "Transport Links"],
+      images: [
+        "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=450"
+      ],
+      status: "available",
+      ownerId: 1
+    });
     
     // Add sample tenant
     this.createTenant({
