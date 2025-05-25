@@ -138,17 +138,13 @@ export default function MyLease() {
                 </div>
               </div>
 
-              {currentLease.terms && (
-                <div>
-                  <Separator className="my-4" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-900 mb-2">Lease Terms</p>
-                    <p className="text-sm text-gray-600 whitespace-pre-wrap">
-                      {currentLease.terms}
-                    </p>
-                  </div>
-                </div>
-              )}
+              <Separator className="my-4" />
+              <div>
+                <p className="text-sm font-medium text-gray-900 mb-2">Lease Status</p>
+                <p className="text-sm text-gray-600">
+                  This lease agreement is currently {status} and all terms are binding as per the original agreement.
+                </p>
+              </div>
             </CardContent>
           </Card>
 
