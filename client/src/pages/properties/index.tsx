@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import PropertyCard from "@/components/properties/property-card";
 import PropertySearch from "@/components/properties/property-search";
@@ -9,28 +9,26 @@ import { Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAuth } from "@/hooks/use-simple-auth";
 import { isAdmin } from "@/types";
 import SEO from "@/components/seo";
+import { Link } from "wouter";
 
 export default function Properties() {
   const { toast } = useToast();
   const { user } = useAuth();
   const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 9; // 3x3 grid
 
   const { data: properties, isLoading, isError, refetch } = useQuery<Property[]>({
     queryKey: ["/api/properties"],
-    onSuccess: (data) => {
-      if (!isSearching) {
-        setFilteredProperties(data);
-      }
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to load properties",
-        variant: "destructive",
-      });
-    },
   });
+
+  // Initialize filtered properties when data loads
+  useEffect(() => {
+    if (properties && !isSearching) {
+      setFilteredProperties(properties);
+    }
+  }, [properties, isSearching]);
 
   const handleSearch = (values: any) => {
     if (!properties) return;
@@ -79,9 +77,21 @@ export default function Properties() {
 
   const handleReset = () => {
     setIsSearching(false);
+    setCurrentPage(1);
     if (properties) {
       setFilteredProperties(properties);
     }
+  };
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredProperties.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentProperties = filteredProperties.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -99,13 +109,12 @@ export default function Properties() {
           </div>
           
           {isAdmin(user) && (
-            <Button 
-              onClick={() => setLocation('/properties/add')}
-              className="bg-primary hover:bg-primary-dark mt-4 md:mt-0 flex items-center gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Add Property
-            </Button>
+            <Link href="/properties/add">
+              <Button className="bg-primary hover:bg-primary-dark mt-4 md:mt-0 flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Add Property
+              </Button>
+            </Link>
           )}
         </div>
         
@@ -134,11 +143,84 @@ export default function Properties() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProperties.map((property) => (
-              <PropertyCard key={property.id} property={property} />
-            ))}
-          </div>
+          <>
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-sm text-gray-600">
+                Showing {startIndex + 1}-{Math.min(endIndex, filteredProperties.length)} of {filteredProperties.length} properties
+              </p>
+              {totalPages > 1 && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Previous
+                  </Button>
+                  
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <Button
+                        key={page}
+                        variant={page === currentPage ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handlePageChange(page)}
+                        className="w-8 h-8 p-0"
+                      >
+                        {page}
+                      </Button>
+                    ))}
+                  </div>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {currentProperties.map((property) => (
+                <PropertyCard key={property.id} property={property} />
+              ))}
+            </div>
+            
+            {totalPages > 1 && (
+              <div className="flex justify-center mt-8">
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Previous
+                  </Button>
+                  
+                  <span className="text-sm text-gray-600 px-4">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  
+                  <Button
+                    variant="outline"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </>
