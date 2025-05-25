@@ -69,7 +69,8 @@ export default function Applications() {
     );
   };
 
-  const filteredApplications = applications.filter((app: ApplicationWithProperty) =>
+  const appList = (applications as ApplicationWithProperty[]) || [];
+  const filteredApplications = appList.filter((app: ApplicationWithProperty) =>
     app.property?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     app.property?.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     app.status.toLowerCase().includes(searchTerm.toLowerCase())
