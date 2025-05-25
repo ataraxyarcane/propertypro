@@ -203,9 +203,61 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
             </Button>
           </Link>
           
-          {/* Management features - visible to admins and property owners */}
-          {canManageProperties(user) && (
+          {/* Property Management Section - visible to property owners */}
+          {isPropertyOwner(user) && (
             <>
+              <div className="px-3 py-2 text-xs font-semibold text-neutral-mid uppercase">
+                Property Management
+              </div>
+              
+              <Link href="/leases">
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    "w-full justify-start",
+                    isActive("/leases") && "bg-primary/10 text-primary border-l-4 border-primary"
+                  )}
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  Leases
+                </Button>
+              </Link>
+              
+              <Link href="/tenants">
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    "w-full justify-start",
+                    isActive("/tenants") && "bg-primary/10 text-primary border-l-4 border-primary"
+                  )}
+                >
+                  <UsersRound className="mr-2 h-4 w-4" />
+                  Tenants
+                </Button>
+              </Link>
+              
+              <Link href="/maintenance">
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    "w-full justify-start",
+                    isActive("/maintenance") && "bg-primary/10 text-primary border-l-4 border-primary"
+                  )}
+                >
+                  <Drill className="mr-2 h-4 w-4" />
+                  Maintenance Requests
+                </Button>
+              </Link>
+            </>
+          )}
+          
+          {/* Admin-specific management features */}
+          {isAdmin(user) && !isPropertyOwner(user) && (
+            <>
+              <div className="px-3 py-2 text-xs font-semibold text-neutral-mid uppercase">
+                Management
+              </div>
+              
               <Link href="/leases">
                 <Button
                   variant="ghost"
@@ -234,19 +286,21 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
             </>
           )}
           
-          {/* Maintenance - visible to all users but with different context */}
-          <Link href="/maintenance">
-            <Button
-              variant="ghost"
-              className={cn(
-                "w-full justify-start",
-                isActive("/maintenance") && "bg-primary/10 text-primary border-l-4 border-primary"
-              )}
-            >
-              <Drill className="mr-2 h-4 w-4" />
-              {canManageProperties(user) ? 'Maintenance Requests' : 'Request Maintenance'}
-            </Button>
-          </Link>
+          {/* Maintenance for tenants - visible to tenant users only */}
+          {user?.role === 'tenant' && (
+            <Link href="/maintenance">
+              <Button
+                variant="ghost"
+                className={cn(
+                  "w-full justify-start",
+                  isActive("/maintenance") && "bg-primary/10 text-primary border-l-4 border-primary"
+                )}
+              >
+                <Drill className="mr-2 h-4 w-4" />
+                Request Maintenance
+              </Button>
+            </Link>
+          )}
           
           <div className="border-t border-gray-200 my-2"></div>
           
