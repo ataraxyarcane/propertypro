@@ -274,6 +274,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update user profile
+  app.put("/api/users/:id", authMiddleware, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const { firstName, lastName, email, password, currentPassword } = req.body;
+      
+      // Users can only update their own profile, unless they're admin
+      if (req.user.role !== "admin" && req.user.id !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const existingUser = await storage.getUser(userId);
+      if (!existingUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Prepare update data
+      const updateData: any = {};
+      
+      if (firstName !== undefined) updateData.firstName = firstName;
+      if (lastName !== undefined) updateData.lastName = lastName;
+      if (email !== undefined) updateData.email = email;
+      
+      // Handle password change
+      if (password && currentPassword) {
+        const bcrypt = require('bcrypt');
+        const isValidPassword = await bcrypt.compare(currentPassword, existingUser.password);
+        
+        if (!isValidPassword) {
+          return res.status(400).json({ message: "Current password is incorrect" });
+        }
+        
+        updateData.password = await bcrypt.hash(password, 10);
+      }
+      
+      const updatedUser = await storage.updateUser(userId, updateData);
+      
+      if (!updatedUser) {
+        return res.status(500).json({ message: "Error updating user" });
+      }
+      
+      // Return user without password
+      const { password: _, ...userWithoutPassword } = updatedUser;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error("Error updating user:", error);
+      res.status(500).json({ message: "Error updating user" });
+    }
+  });
+
   app.get("/api/users/:id", authMiddleware, async (req, res) => {
     try {
       const userId = parseInt(req.params.id);
