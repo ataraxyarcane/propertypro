@@ -22,6 +22,7 @@ import OwnerDashboard from "@/pages/owner/dashboard";
 import MyProperties from "@/pages/owner/my-properties";
 import Leases from "@/pages/leases/index";
 import Tenants from "@/pages/tenants/index";
+import AddTenant from "@/pages/tenants/add";
 import Maintenance from "@/pages/maintenance/index";
 import AddMaintenanceRequest from "@/pages/maintenance/add";
 import Profile from "@/pages/profile/index";
@@ -63,6 +64,7 @@ function Router() {
       {/* Other management routes */}
       <Route path="/leases" component={Leases} />
       <Route path="/tenants" component={Tenants} />
+      <Route path="/tenants/add" component={AddTenant} />
       <Route path="/maintenance" component={Maintenance} />
       <Route path="/maintenance/add" component={AddMaintenanceRequest} />
       

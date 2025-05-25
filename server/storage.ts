@@ -529,6 +529,57 @@ export class MemStorage implements IStorage {
   async deleteLeaseApplication(id: number): Promise<boolean> {
     return this.leaseApplications.delete(id);
   }
+
+  // Enhanced tenant operations
+  async getTenantsForOwner(ownerId: number): Promise<Tenant[]> {
+    // Get properties owned by this owner
+    const ownerProperties = Array.from(this.properties.values()).filter(p => p.ownerId === ownerId);
+    const propertyIds = ownerProperties.map(p => p.id);
+    
+    // Get leases for those properties
+    const ownerLeases = Array.from(this.leases.values()).filter(l => propertyIds.includes(l.propertyId));
+    const tenantIds = ownerLeases.map(l => l.tenantId);
+    
+    // Return tenants in those leases
+    return Array.from(this.tenants.values()).filter(t => tenantIds.includes(t.id));
+  }
+
+  async getTenantWithUser(tenantId: number): Promise<(Tenant & { user: User }) | undefined> {
+    const tenant = this.tenants.get(tenantId);
+    if (!tenant) return undefined;
+    
+    const user = this.users.get(tenant.userId);
+    if (!user) return undefined;
+    
+    return { ...tenant, user };
+  }
+
+  async getTenantsWithUsers(): Promise<(Tenant & { user: User })[]> {
+    const result: (Tenant & { user: User })[] = [];
+    
+    for (const tenant of this.tenants.values()) {
+      const user = this.users.get(tenant.userId);
+      if (user) {
+        result.push({ ...tenant, user });
+      }
+    }
+    
+    return result;
+  }
+
+  async getTenantsWithUsersForOwner(ownerId: number): Promise<(Tenant & { user: User })[]> {
+    const ownerTenants = await this.getTenantsForOwner(ownerId);
+    const result: (Tenant & { user: User })[] = [];
+    
+    for (const tenant of ownerTenants) {
+      const user = this.users.get(tenant.userId);
+      if (user) {
+        result.push({ ...tenant, user });
+      }
+    }
+    
+    return result;
+  }
 }
 
 export class DatabaseStorage implements IStorage {
