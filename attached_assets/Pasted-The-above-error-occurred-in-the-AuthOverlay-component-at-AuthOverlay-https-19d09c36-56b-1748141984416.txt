@@ -1,0 +1,29 @@
+The above error occurred in the <AuthOverlay> component:
+
+    at AuthOverlay (https://19d09c36-56b3-4afa-bccd-9a09d929d912-00-1vr39hcuy2v6v.kirk.replit.dev/src/components/auth/auth-overlay.tsx?t=1748127181605:22:39)
+    at AuthProvider (https://19d09c36-56b3-4afa-bccd-9a09d929d912-00-1vr39hcuy2v6v.kirk.replit.dev/src/hooks/use-simple-auth.tsx?v=zQYuffDqUoafdCA8WNBeu:21:32)
+    at Provider (https://19d09c36-56b3-4afa-bccd-9a09d929d912-00-1vr39hcuy2v6v.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-JCDXHMNF.js?v=be0e380f:38:15)
+    at TooltipProvider (https://19d09c36-56b3-4afa-bccd-9a09d929d912-00-1vr39hcuy2v6v.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=79c452fd:61:5)
+    at QueryClientProvider (https://19d09c36-56b3-4afa-bccd-9a09d929d912-00-1vr39hcuy2v6v.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=1702c41b:2805:3)
+    at App (https://19d09c36-56b3-4afa-bccd-9a09d929d912-00-1vr39hcuy2v6v.kirk.replit.dev/src/App.tsx?t=1748141814833&v=zQYuffDqUoafdCA8WNBeu:183:3)
+    at AuthProvider (https://19d09c36-56b3-4afa-bccd-9a09d929d912-00-1vr39hcuy2v6v.kirk.replit.dev/src/hooks/use-simple-auth.tsx?v=zQYuffDqUoafdCA8WNBeu:21:32)
+    at ThemeProvider (https://19d09c36-56b3-4afa-bccd-9a09d929d912-00-1vr39hcuy2v6v.kirk.replit.dev/src/components/theme-provider.tsx?v=zQYuffDqUoafdCA8WNBeu:25:3)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+
+at AuthOverlay (https://19d09c36-56b3-4afa-bccd-9a09d929d912-00-1vr39hcuy2v6v.kirk.replit.dev/src/components/auth/auth-overlay.tsx?t=1748127181605:22:39)
+at AuthProvider (https://19d09c36-56b3-4afa-bccd-9a09d929d912-00-1vr39hcuy2v6v.kirk.replit.dev/src/hooks/use-simple-auth.tsx?v=zQYuffDqUoafdCA8WNBeu:21:32)
+at Provider (https://19d09c36-56b3-4afa-bccd-9a09d929d912-00-1vr39hcuy2v6v.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-JCDXHMNF.js?v=be0e380f:38:15)
+at TooltipProvider (https://19d09c36-56b3-4afa-bccd-9a09d929d912-00-1vr39hcuy2v6v.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=79c452fd:61:5)
+at QueryClientProvider (https://19d09c36-56b3-4afa-bccd-9a09d929d912-00-1vr39hcuy2v6v.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=1702c41b:2805:3)
+at App (https://19d09c36-56b3-4afa-bccd-9a09d929d912-00-1vr39hcuy2v6v.kirk.replit.dev/src/App.tsx?t=1748141814833&amp;v=zQYuffDqUoafdCA8WNBeu:183:3)
+at AuthProvider (https://19d09c36-56b3-4afa-bccd-9a09d929d912-00-1vr39hcuy2v6v.kirk.replit.dev/src/hooks/use-simple-auth.tsx?v=zQYuffDqUoafdCA8WNBeu:21:32)
+at ThemeProvider (https://19d09c36-56b3-4afa-bccd-9a09d929d912-00-1vr39hcuy2v6v.kirk.replit.dev/src/components/theme-provider.tsx?v=zQYuffDqUoafdCA8WNBeu:25:3)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+at t.value (https://19d09c36-56b3-4afa-bccd-9a09d929d912-00-1vr39hcuy2v6v.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://19d09c36-56b3-4afa-bccd-9a09d929d912-00-1vr39hcuy2v6v.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://19d09c36-56b3-4afa-bccd-9a09d929d912-00-1vr39hcuy2v6v.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://19d09c36-56b3-4afa-bccd-9a09d929d912-00-1vr39hcuy2v6v.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400

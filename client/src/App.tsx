@@ -28,10 +28,11 @@ import AddMaintenanceRequest from "@/pages/maintenance/add";
 import Profile from "@/pages/profile/index";
 import Settings from "@/pages/settings";
 import AuthOverlay from "@/components/auth/auth-overlay";
-import { AuthProvider } from "@/hooks/use-simple-auth";
+import { AuthProvider, useAuth } from "@/hooks/use-simple-auth";
 import { useEffect } from "react";
 import { initGA } from "./lib/analytics";
 import { useAnalytics } from "./hooks/use-analytics";
+import { useLocation } from "wouter";
 
 function Router() {
   // Track page views when routes change
@@ -78,6 +79,47 @@ function Router() {
   );
 }
 
+function AuthenticatedApp() {
+  const { isAuthenticated, isLoading } = useAuth();
+  const [location] = useLocation();
+  
+  // Public routes that don't require authentication
+  const publicRoutes = ['/login', '/register'];
+  const isPublicRoute = publicRoutes.includes(location);
+  
+  // Effect to redirect to login if not authenticated
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated && !isPublicRoute) {
+      window.location.href = '/login';
+    }
+  }, [isAuthenticated, isLoading, isPublicRoute, location]);
+  
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 bg-background flex items-center justify-center z-50">
+        <div className="text-xl font-medium">Loading...</div>
+      </div>
+    );
+  }
+  
+  // If on a public route or authenticated, show the app
+  if (isPublicRoute || isAuthenticated) {
+    return (
+      <Layout>
+        <Router />
+      </Layout>
+    );
+  }
+  
+  // Fallback loading state
+  return (
+    <div className="fixed inset-0 bg-background flex items-center justify-center z-50">
+      <div className="text-xl font-medium">Redirecting...</div>
+    </div>
+  );
+}
+
 function App() {
   // Initialize Google Analytics when app loads
   useEffect(() => {
@@ -93,11 +135,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <AuthProvider>
-          <AuthOverlay>
-            <Layout>
-              <Router />
-            </Layout>
-          </AuthOverlay>
+          <AuthenticatedApp />
         </AuthProvider>
         <Toaster />
       </TooltipProvider>
