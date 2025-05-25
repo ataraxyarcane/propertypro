@@ -1214,6 +1214,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get tenant's leases (for tenant users to view their own leases)
+  app.get('/api/tenants/my-leases', authMiddleware, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      
+      // Find tenant record for this user
+      const tenant = await storage.getTenantByUserId(user.id);
+      if (!tenant) {
+        return res.json([]); // No tenant record means no leases
+      }
+      
+      // Get leases for this tenant
+      const leases = await storage.getLeasesForTenant(tenant.id);
+      
+      // Get detailed lease information with property and tenant details
+      const leasesWithDetails = await Promise.all(
+        leases.map(async (lease) => {
+          const property = await storage.getProperty(lease.propertyId);
+          const tenantDetails = await storage.getTenantWithUser(tenant.id);
+          
+          return {
+            ...lease,
+            property,
+            tenant: tenantDetails
+          };
+        })
+      );
+      
+      res.json(leasesWithDetails);
+    } catch (error) {
+      console.error('Error fetching tenant leases:', error);
+      res.status(500).json({ message: 'Failed to fetch leases' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

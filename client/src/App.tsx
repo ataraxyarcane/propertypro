@@ -23,6 +23,7 @@ import MyProperties from "@/pages/owner/my-properties";
 import Leases from "@/pages/leases/index";
 import Tenants from "@/pages/tenants/index";
 import AddTenant from "@/pages/tenants/add";
+import MyLease from "@/pages/tenants/my-lease";
 import Maintenance from "@/pages/maintenance/index";
 import AddMaintenanceRequest from "@/pages/maintenance/add";
 import Profile from "@/pages/profile/index";
@@ -66,6 +67,7 @@ function Router() {
       <Route path="/leases" component={Leases} />
       <Route path="/tenants" component={Tenants} />
       <Route path="/tenants/add" component={AddTenant} />
+      <Route path="/tenants/my-lease" component={MyLease} />
       <Route path="/maintenance" component={Maintenance} />
       <Route path="/maintenance/add" component={AddMaintenanceRequest} />
       

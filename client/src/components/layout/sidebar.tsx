@@ -282,20 +282,39 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
             </>
           )}
           
-          {/* Maintenance for tenants - visible to tenant users only */}
+          {/* Tenant-specific features */}
           {user?.role === 'tenant' && (
-            <Link href="/maintenance">
-              <Button
-                variant="ghost"
-                className={cn(
-                  "w-full justify-start",
-                  isActive("/maintenance") && "bg-primary/10 text-primary border-l-4 border-primary"
-                )}
-              >
-                <Drill className="mr-2 h-4 w-4" />
-                Request Maintenance
-              </Button>
-            </Link>
+            <>
+              <div className="px-3 py-2 text-xs font-semibold text-neutral-mid uppercase">
+                My Rental
+              </div>
+              
+              <Link href="/tenants/my-lease">
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    "w-full justify-start",
+                    isActive("/tenants/my-lease") && "bg-primary/10 text-primary border-l-4 border-primary"
+                  )}
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  My Lease
+                </Button>
+              </Link>
+              
+              <Link href="/maintenance">
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    "w-full justify-start",
+                    isActive("/maintenance") && "bg-primary/10 text-primary border-l-4 border-primary"
+                  )}
+                >
+                  <Drill className="mr-2 h-4 w-4" />
+                  Request Maintenance
+                </Button>
+              </Link>
+            </>
           )}
           
           <div className="border-t border-gray-200 my-2"></div>
