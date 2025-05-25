@@ -16,7 +16,6 @@ import Properties from "@/pages/properties/index";
 import PropertyDetails from "@/pages/properties/[id]";
 import AddProperty from "@/pages/properties/add";
 import EditProperty from "@/pages/properties/edit";
-import ApplyForProperty from "@/pages/properties/apply";
 import PropertyOwnerRegister from "@/pages/owner/register";
 import OwnerDashboard from "@/pages/owner/dashboard";
 import MyProperties from "@/pages/owner/my-properties";
@@ -24,6 +23,9 @@ import Leases from "@/pages/leases/index";
 import Tenants from "@/pages/tenants/index";
 import AddTenant from "@/pages/tenants/add";
 import MyLease from "@/pages/tenants/my-lease";
+import Applications from "@/pages/applications/index";
+import ApplyForProperty from "@/pages/applications/apply";
+import ApplicationDetails from "@/pages/applications/[id]";
 import Maintenance from "@/pages/maintenance/index";
 import AddMaintenanceRequest from "@/pages/maintenance/add";
 import Profile from "@/pages/profile/index";
@@ -70,6 +72,11 @@ function Router() {
       <Route path="/tenants/my-lease" component={MyLease} />
       <Route path="/maintenance" component={Maintenance} />
       <Route path="/maintenance/add" component={AddMaintenanceRequest} />
+      
+      {/* Application routes */}
+      <Route path="/applications" component={Applications} />
+      <Route path="/applications/:id" component={ApplicationDetails} />
+      <Route path="/properties/:id/apply" component={ApplyForProperty} />
       
       {/* User account routes */}
       <Route path="/profile" component={Profile} />

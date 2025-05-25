@@ -530,6 +530,91 @@ export class MemStorage implements IStorage {
     return this.leaseApplications.delete(id);
   }
 
+  async getTenantsForOwner(ownerId: number): Promise<Tenant[]> {
+    const properties = Array.from(this.properties.values()).filter(p => p.ownerId === ownerId);
+    const propertyIds = properties.map(p => p.id);
+    const leases = Array.from(this.leases.values()).filter(l => propertyIds.includes(l.propertyId));
+    const tenantIds = leases.map(l => l.tenantId);
+    return Array.from(this.tenants.values()).filter(t => tenantIds.includes(t.id));
+  }
+
+  async getTenantWithUser(tenantId: number): Promise<(Tenant & { user: User }) | undefined> {
+    const tenant = this.tenants.get(tenantId);
+    if (!tenant) return undefined;
+    
+    const user = this.users.get(tenant.userId);
+    if (!user) return undefined;
+    
+    return { ...tenant, user };
+  }
+
+  async getTenantsWithUsers(): Promise<(Tenant & { user: User })[]> {
+    const result: (Tenant & { user: User })[] = [];
+    for (const tenant of this.tenants.values()) {
+      const user = this.users.get(tenant.userId);
+      if (user) {
+        result.push({ ...tenant, user });
+      }
+    }
+    return result;
+  }
+
+  async getTenantsWithUsersForOwner(ownerId: number): Promise<(Tenant & { user: User })[]> {
+    const tenants = await this.getTenantsForOwner(ownerId);
+    const result: (Tenant & { user: User })[] = [];
+    for (const tenant of tenants) {
+      const user = this.users.get(tenant.userId);
+      if (user) {
+        result.push({ ...tenant, user });
+      }
+    }
+    return result;
+  }
+
+  // Add missing rent payment methods
+  async getRentPayment(id: number): Promise<RentPayment | undefined> {
+    return this.rentPayments.get(id);
+  }
+
+  async getRentPayments(): Promise<RentPayment[]> {
+    return Array.from(this.rentPayments.values());
+  }
+
+  async getRentPaymentsForLease(leaseId: number): Promise<RentPayment[]> {
+    return Array.from(this.rentPayments.values()).filter(p => p.leaseId === leaseId);
+  }
+
+  async getRentPaymentsForTenant(tenantId: number): Promise<RentPayment[]> {
+    return Array.from(this.rentPayments.values()).filter(p => p.tenantId === tenantId);
+  }
+
+  async getRentPaymentsForOwner(ownerId: number): Promise<RentPayment[]> {
+    return Array.from(this.rentPayments.values()).filter(p => p.ownerId === ownerId);
+  }
+
+  async createRentPayment(insertPayment: InsertRentPayment): Promise<RentPayment> {
+    const payment: RentPayment = {
+      id: this.rentPaymentIdCounter++,
+      createdAt: new Date(),
+      ...insertPayment
+    };
+    this.rentPayments.set(payment.id, payment);
+    return payment;
+  }
+
+  async updateRentPayment(id: number, paymentData: Partial<RentPayment>): Promise<RentPayment | undefined> {
+    const payment = this.rentPayments.get(id);
+    if (!payment) return undefined;
+    
+    const updated: RentPayment = { ...payment, ...paymentData };
+    this.rentPayments.set(id, updated);
+    return updated;
+  }
+
+  async deleteRentPayment(id: number): Promise<boolean> {
+    return this.rentPayments.delete(id);
+  }
+
   // Enhanced tenant operations
   async getTenantsForOwner(ownerId: number): Promise<Tenant[]> {
     // Get properties owned by this owner

@@ -289,6 +289,19 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
                 My Rental
               </div>
               
+              <Link href="/applications">
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    "w-full justify-start",
+                    isActive("/applications") && "bg-primary/10 text-primary border-l-4 border-primary"
+                  )}
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  My Applications
+                </Button>
+              </Link>
+              
               <Link href="/tenants/my-lease">
                 <Button
                   variant="ghost"
