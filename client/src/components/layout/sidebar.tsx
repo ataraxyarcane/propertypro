@@ -141,10 +141,6 @@ export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {
           {/* Property Owner Dashboard */}
           {isPropertyOwner(user) && (
             <>
-              <div className="px-3 py-2 text-xs font-semibold text-neutral-mid uppercase">
-                Property Management
-              </div>
-              
               <Link href="/owner/dashboard">
                 <Button
                   variant="ghost"
