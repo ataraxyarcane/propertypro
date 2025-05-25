@@ -59,7 +59,10 @@ export default function Profile() {
     setIsUpdating(true);
     
     try {
-      await apiRequest("PUT", `/api/users/${user.id}`, data);
+      await apiRequest(`/api/users/${user.id}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+      });
       
       toast({
         title: "Profile Updated",
@@ -69,6 +72,7 @@ export default function Profile() {
       // Refetch the user data
       queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
     } catch (error) {
+      console.error("Profile update error:", error);
       toast({
         title: "Error",
         description: "Failed to update profile",
@@ -85,9 +89,12 @@ export default function Profile() {
     setIsChangingPassword(true);
     
     try {
-      await apiRequest("PUT", `/api/users/${user.id}`, {
-        password: data.newPassword,
-        currentPassword: data.currentPassword,
+      await apiRequest(`/api/users/${user.id}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          password: data.newPassword,
+          currentPassword: data.currentPassword,
+        }),
       });
       
       toast({
@@ -101,6 +108,7 @@ export default function Profile() {
         confirmPassword: "",
       });
     } catch (error) {
+      console.error("Password update error:", error);
       toast({
         title: "Error",
         description: "Failed to change password. Make sure your current password is correct.",
