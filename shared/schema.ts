@@ -44,11 +44,15 @@ export const properties = pgTable("properties", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const insertPropertySchema = createInsertSchema(properties).omit({
-  id: true,
-  createdAt: true,
-  isApproved: true,
-});
+export const insertPropertySchema = createInsertSchema(properties)
+  .omit({
+    id: true,
+    createdAt: true,
+    isApproved: true,
+  })
+  .extend({
+    propertyType: z.enum(['apartment', 'house', 'condo', 'townhouse', 'detached', 'semi-detached']),
+  });
 
 // Property Owners
 export const propertyOwners = pgTable("property_owners", {
