@@ -111,6 +111,8 @@ export default function PropertySearch({ onSearch, onReset }: PropertySearchProp
                         <SelectItem value="house">House</SelectItem>
                         <SelectItem value="condo">Condo</SelectItem>
                         <SelectItem value="townhouse">Townhouse</SelectItem>
+                        <SelectItem value="detached">Detached</SelectItem>
+                        <SelectItem value="semi-detached">Semi-detached</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />

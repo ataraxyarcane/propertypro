@@ -36,7 +36,7 @@ const propertySchema = z.object({
   state: z.string().min(1, 'County is required'),
   zipCode: z.string().optional(),
   description: z.string().optional(),
-  propertyType: z.enum(['apartment', 'house', 'condo', 'townhouse']),
+  propertyType: z.enum(['apartment', 'house', 'condo', 'townhouse', 'detached', 'semi-detached']),
   price: z.number().min(1, 'Monthly rent must be greater than 0'),
   bedrooms: z.number().min(0),
   bathrooms: z.number().min(0),
@@ -193,6 +193,8 @@ export default function AddProperty() {
                             <SelectItem value="house">House</SelectItem>
                             <SelectItem value="condo">Condo</SelectItem>
                             <SelectItem value="townhouse">Townhouse</SelectItem>
+                            <SelectItem value="detached">Detached</SelectItem>
+                            <SelectItem value="semi-detached">Semi-detached</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
