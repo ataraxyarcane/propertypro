@@ -161,39 +161,7 @@ export default function Home() {
         </div>
       </div>
       
-      {/* Features Section */}
-      <div className="py-12 px-4 bg-background">
-        <div className="max-w-5xl mx-auto text-center">
-          <h2 className="text-2xl font-bold mb-2">Why Choose PropertyPro?</h2>
-          <p className="text-neutral-mid mb-10">Our comprehensive property management system offers everything you need</p>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="p-6 border rounded-lg">
-              <div className="w-12 h-12 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
-                <Building className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="text-lg font-bold mb-2">Property Management</h3>
-              <p className="text-neutral-mid">Easily manage all your properties in one place with detailed property listings</p>
-            </div>
-            
-            <div className="p-6 border rounded-lg">
-              <div className="w-12 h-12 mx-auto mb-4 bg-secondary/10 rounded-full flex items-center justify-center">
-                <FileText className="h-6 w-6 text-secondary" />
-              </div>
-              <h3 className="text-lg font-bold mb-2">Lease Tracking</h3>
-              <p className="text-neutral-mid">Keep track of all your leases, terms, and rental payments in a centralized system</p>
-            </div>
-            
-            <div className="p-6 border rounded-lg">
-              <div className="w-12 h-12 mx-auto mb-4 bg-accent/10 rounded-full flex items-center justify-center">
-                <Drill className="h-6 w-6 text-accent" />
-              </div>
-              <h3 className="text-lg font-bold mb-2">Maintenance Requests</h3>
-              <p className="text-neutral-mid">Streamlined maintenance request system for quick resolution of property issues</p>
-            </div>
-          </div>
-        </div>
-      </div>
+
       
       {/* CTA Section */}
       <div className="py-16 px-4 bg-primary text-white">
