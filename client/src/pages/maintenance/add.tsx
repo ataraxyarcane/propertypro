@@ -57,7 +57,7 @@ export default function AddMaintenanceRequest() {
         method: 'POST',
         body: JSON.stringify({
           ...data,
-          tenantId: user?.id, // Assuming the owner is creating on behalf of tenant
+          // Don't set tenantId for property owners - it's optional
           status: 'pending'
         }),
       });
