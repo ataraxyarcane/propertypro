@@ -1,12 +1,25 @@
-import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle 
+} from '@/components/ui/alert-dialog';
 import { useAuth } from '@/hooks/use-simple-auth';
-import { Building, Euro, MapPin, Plus, Bed, Bath, Square } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { Building, Euro, MapPin, Plus, Bed, Bath, Square, Trash2 } from 'lucide-react';
 import SEO from '@/components/seo';
 import { formatCurrency } from '@/types';
+import { apiRequest } from '@/lib/queryClient';
 
 interface Property {
   id: number;
@@ -30,11 +43,50 @@ interface Property {
 
 export default function MyProperties() {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [propertyToDelete, setPropertyToDelete] = useState<Property | null>(null);
   
   const { data: properties = [], isLoading } = useQuery<Property[]>({
     queryKey: ['/api/properties'],
     enabled: !!user,
   });
+
+  const deletePropertyMutation = useMutation({
+    mutationFn: async (propertyId: number) => {
+      return await apiRequest(`/api/properties/${propertyId}`, {
+        method: 'DELETE',
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/properties'] });
+      toast({
+        title: 'Success',
+        description: 'Property deleted successfully!',
+      });
+      setDeleteDialogOpen(false);
+      setPropertyToDelete(null);
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message || 'Failed to delete property',
+      });
+    },
+  });
+
+  const handleDeleteClick = (property: Property) => {
+    setPropertyToDelete(property);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (propertyToDelete) {
+      deletePropertyMutation.mutate(propertyToDelete.id);
+    }
+  };
 
   // Filter to show only properties owned by the current user
   const myProperties = properties.filter(property => property.ownerId === user?.id);
@@ -201,12 +253,47 @@ export default function MyProperties() {
                         Edit
                       </Button>
                     </Link>
+                    <Button 
+                      variant="destructive" 
+                      size="sm"
+                      onClick={() => handleDeleteClick(property)}
+                      className="px-3"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
             ))}
           </div>
         )}
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Property</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete "{propertyToDelete?.name}"? This action cannot be undone.
+                {propertyToDelete?.status === 'leased' && (
+                  <div className="mt-2 p-2 bg-yellow-100 text-yellow-800 rounded text-sm">
+                    ⚠️ This property appears to be leased. Please ensure all leases are properly terminated before deletion.
+                  </div>
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleDeleteConfirm}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                disabled={deletePropertyMutation.isPending}
+              >
+                {deletePropertyMutation.isPending ? 'Deleting...' : 'Delete Property'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </>
   );

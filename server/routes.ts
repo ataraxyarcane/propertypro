@@ -519,13 +519,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/properties/:id", authMiddleware, adminMiddleware, async (req, res) => {
+  app.delete("/api/properties/:id", authMiddleware, async (req, res) => {
     try {
       const propertyId = parseInt(req.params.id);
       const property = await storage.getProperty(propertyId);
       
       if (!property) {
         return res.status(404).json({ message: "Property not found" });
+      }
+      
+      // Allow property owners to delete their own properties, or admins to delete any
+      if (req.user.role !== "admin" && property.ownerId !== req.user.id) {
+        return res.status(403).json({ 
+          message: "You can only delete properties you own" 
+        });
       }
       
       // Check for active leases
