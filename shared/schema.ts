@@ -148,7 +148,7 @@ export const insertLeaseSchema = createInsertSchema(leases).omit({
 export const maintenanceRequests = pgTable("maintenance_requests", {
   id: serial("id").primaryKey(),
   propertyId: integer("property_id").notNull(),
-  tenantId: integer("tenant_id").notNull(),
+  tenantId: integer("tenant_id"), // Made optional for property owner requests
   title: text("title").notNull(),
   description: text("description").notNull(),
   status: text("status").notNull().default("pending"),

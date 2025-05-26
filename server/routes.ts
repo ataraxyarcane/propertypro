@@ -832,6 +832,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const requestData = insertMaintenanceRequestSchema.parse(req.body);
       
+      // Verify property exists
+      const property = await storage.getProperty(requestData.propertyId);
+      if (!property) {
+        return res.status(400).json({ message: "Property not found" });
+      }
+      
       // If tenant, ensure they can only create requests for their properties
       if (req.user.role === "tenant") {
         const tenant = await storage.getTenantByUserId(req.user.id);
@@ -854,18 +860,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
             message: "You can only create maintenance requests for properties you are leasing" 
           });
         }
-      }
-      
-      // Verify property exists
-      const property = await storage.getProperty(requestData.propertyId);
-      if (!property) {
-        return res.status(400).json({ message: "Property not found" });
-      }
-      
-      // Verify tenant exists
-      const tenant = await storage.getTenant(requestData.tenantId);
-      if (!tenant) {
-        return res.status(400).json({ message: "Tenant not found" });
+        
+        // Verify tenant exists (required for tenant requests)
+        const tenantRecord = await storage.getTenant(requestData.tenantId);
+        if (!tenantRecord) {
+          return res.status(400).json({ message: "Tenant not found" });
+        }
+      } else if (req.user.role === "property_owner") {
+        // Property owners can create requests for their own properties
+        if (property.ownerId !== req.user.id) {
+          return res.status(403).json({ 
+            message: "You can only create maintenance requests for properties you own" 
+          });
+        }
+        
+        // For property owners, tenantId is optional (can be null for personal memos)
+        if (requestData.tenantId) {
+          // If tenantId is provided, verify it exists
+          const tenant = await storage.getTenant(requestData.tenantId);
+          if (!tenant) {
+            return res.status(400).json({ message: "Tenant not found" });
+          }
+        }
+      } else if (req.user.role === "admin") {
+        // Admins can create requests for any property
+        if (requestData.tenantId) {
+          // If tenantId is provided, verify it exists
+          const tenant = await storage.getTenant(requestData.tenantId);
+          if (!tenant) {
+            return res.status(400).json({ message: "Tenant not found" });
+          }
+        }
       }
       
       const newRequest = await storage.createMaintenanceRequest(requestData);
