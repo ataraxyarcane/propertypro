@@ -138,6 +138,7 @@ export default function ApplyForProperty() {
 
     const applicationData = {
       propertyId: parseInt(propertyId),
+      applicantId: user?.id,
       ...formData,
       monthlyIncome: formData.monthlyIncome ? parseFloat(formData.monthlyIncome) : null,
       // For now, we'll simulate document upload with file names
