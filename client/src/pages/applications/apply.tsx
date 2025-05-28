@@ -69,13 +69,10 @@ export default function ApplyForProperty() {
 
   const applicationMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await apiRequest("POST", "/api/lease-applications", data);
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const errorMessage = errorData.message || errorData.error || `Server error: ${response.status}`;
-        throw new Error(errorMessage);
-      }
-      return response.json();
+      return apiRequest('/api/lease-applications', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
     },
     onSuccess: () => {
       toast({
